@@ -95,6 +95,14 @@ services:
     ports:
       - "4317:4317"
       - "4318:4318"
+  control-plane:
+    build:
+      context: ../../apps/control-plane
+    container_name: deccan-control-plane
+    depends_on:
+      - postgres
+    ports:
+      - "8088:8088"
 
 volumes:
   postgres-data:
