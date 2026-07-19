@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS flyway_bootstrap
+(
+    id INTEGER PRIMARY KEY
+);
+
+INSERT INTO flyway_bootstrap(id)
+VALUES (1)
+ON CONFLICT DO NOTHING;
