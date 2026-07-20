@@ -7,6 +7,8 @@ import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 @Getter
 @Setter
 @Entity
@@ -32,7 +34,7 @@ public class WorkflowVersion extends BaseEntity {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(nullable = false, columnDefinition = "jsonb")
-    private String definition;
+    private JsonNode definition;
 
     @Column(nullable = false)
     private Boolean published;

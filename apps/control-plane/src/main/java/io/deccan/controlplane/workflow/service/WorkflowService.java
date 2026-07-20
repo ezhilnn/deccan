@@ -5,6 +5,7 @@ import io.deccan.controlplane.workflow.entity.WorkflowVersion;
 
 import java.util.List;
 import java.util.UUID;
+import com.fasterxml.jackson.databind.JsonNode;
 
 public interface WorkflowService {
 
@@ -18,10 +19,11 @@ public interface WorkflowService {
             UUID organizationId
     );
 
-    WorkflowVersion publishWorkflow(
-            UUID workflowId,
-            String definition
-    );
+   
+WorkflowVersion publishWorkflow(
+        UUID workflowId,
+        JsonNode definition
+);
 
     List<WorkflowVersion> getWorkflowVersions(
             UUID workflowId

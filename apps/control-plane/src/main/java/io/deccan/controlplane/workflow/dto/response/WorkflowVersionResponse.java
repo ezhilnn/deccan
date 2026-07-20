@@ -1,5 +1,6 @@
 package io.deccan.controlplane.workflow.dto.response;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -16,7 +17,7 @@ public class WorkflowVersionResponse {
 
     private Boolean published;
 
-    private String definition;
+    private JsonNode definition;
 
     private Instant createdAt;
 

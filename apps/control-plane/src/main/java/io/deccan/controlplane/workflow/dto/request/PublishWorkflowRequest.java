@@ -1,6 +1,7 @@
 package io.deccan.controlplane.workflow.dto.request;
 
-import jakarta.validation.constraints.NotBlank;
+import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -8,7 +9,7 @@ import lombok.Setter;
 @Setter
 public class PublishWorkflowRequest {
 
-    @NotBlank
-    private String definition;
+    @NotNull
+    private JsonNode definition;
 
 }

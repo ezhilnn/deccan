@@ -11,7 +11,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.deccan.controlplane.workflow.entity.WorkflowVersion;
 import io.deccan.controlplane.workflow.repository.WorkflowVersionRepository;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.deccan.controlplane.workflow.definition.WorkflowDefinition;
+import io.deccan.controlplane.workflow.definition.validation.WorkflowValidator;
+import com.fasterxml.jackson.databind.JsonNode;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,6 +27,9 @@ public class WorkflowServiceImpl implements WorkflowService {
 
     private final OrganizationRepository organizationRepository;
     private final WorkflowVersionRepository workflowVersionRepository;
+    private final WorkflowValidator workflowValidator;
+
+    private final ObjectMapper objectMapper;
 
     @Override
     public Workflow createWorkflow(
@@ -74,8 +80,7 @@ public class WorkflowServiceImpl implements WorkflowService {
     @Override
 public WorkflowVersion publishWorkflow(
         UUID workflowId,
-        String definition) {
-
+        JsonNode definition){
     Workflow workflow =
             workflowRepository.findById(workflowId)
                     .orElseThrow(() ->
@@ -90,11 +95,34 @@ public WorkflowVersion publishWorkflow(
 
     WorkflowVersion version =
             new WorkflowVersion();
+   WorkflowDefinition workflowDefinition;
 
-    version.setWorkflow(workflow);
-    version.setVersion(nextVersion);
-    version.setDefinition(definition);
-    version.setPublished(true);
+    try {
+
+        workflowDefinition =
+        objectMapper.treeToValue(
+                definition,
+                WorkflowDefinition.class);
+
+
+    } catch (Exception ex) {
+
+        throw new IllegalArgumentException(
+                "Invalid workflow definition",
+                ex
+        );
+
+    }
+      workflowValidator.validate(workflowDefinition);
+
+        version.setWorkflow(workflow);
+        version.setVersion(nextVersion);
+
+        version.setDefinition(
+                objectMapper.valueToTree(workflowDefinition)
+        );
+
+        version.setPublished(true);
 
     version =
             workflowVersionRepository.save(version);

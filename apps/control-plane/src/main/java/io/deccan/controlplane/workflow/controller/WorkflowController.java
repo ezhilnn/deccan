@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.List;
 import java.util.UUID;
@@ -68,14 +69,14 @@ public class WorkflowController {
                 .build();
 
     }
-    @PreAuthorize("hasAuthority('workflow.write')")
-    @PostMapping("/{workflowId}/publish")
-    public ApiResponse<WorkflowVersionResponse> publishWorkflow(
+   @PreAuthorize("hasAuthority('workflow.write')")
+        @PostMapping("/{workflowId}/publish")
+        public ApiResponse<WorkflowVersionResponse> publishWorkflow(
 
-            @PathVariable UUID workflowId,
+                @PathVariable UUID workflowId,
 
-            @Valid
-            @RequestBody PublishWorkflowRequest request) {
+                @Valid
+                @RequestBody PublishWorkflowRequest request) {
 
         WorkflowVersionResponse response =
                 versionMapper.toResponse(
@@ -97,7 +98,7 @@ public class WorkflowController {
                 .data(response)
                 .build();
 
-    }
+        }
     @PreAuthorize("hasAuthority('workflow.read')")
     @GetMapping("/{workflowId}/versions")
     public ApiResponse<List<WorkflowVersionResponse>> versions(
