@@ -4,6 +4,8 @@ import io.deccan.controlplane.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Getter
 @Setter
@@ -28,10 +30,8 @@ public class WorkflowVersion extends BaseEntity {
     @Column(nullable = false)
     private Integer version;
 
-    @Column(
-            nullable = false,
-            columnDefinition = "jsonb"
-    )
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(nullable = false, columnDefinition = "jsonb")
     private String definition;
 
     @Column(nullable = false)
