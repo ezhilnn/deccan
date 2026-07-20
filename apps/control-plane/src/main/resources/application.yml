@@ -18,6 +18,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
+  
 
 server:
   port: 8088
@@ -38,3 +39,21 @@ management:
 springdoc:
   swagger-ui:
     path: /swagger
+  
+security:
+  jwt:
+    secret: VopUFd82sAltjS6QLENm0o7cAsDRrHfeMIx4OKpSGkI1L2XAPAlFh/1A08/lUoMCWoj/nIPCzTuehxatOTu0xA==
+    expiration: 86400000
+
+deccan:
+  bootstrap:
+    enabled: true
+    organization:
+      name: Deccan
+      slug: deccan
+
+    admin:
+      first-name: Admin
+      last-name: User
+      email: admin@deccan.dev
+      password: change-me

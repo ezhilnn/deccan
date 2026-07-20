@@ -13,7 +13,7 @@ import io.deccan.controlplane.identity.service.IdentityService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.security.access.prepost.PreAuthorize;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,6 +25,7 @@ public class IdentityController {
     private final IdentityService identityService;
     private final IdentityMapper mapper;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/organizations")
     public ApiResponse<OrganizationResponse> createOrganization(
             @Valid @RequestBody CreateOrganizationRequest request) {
@@ -42,6 +43,8 @@ public class IdentityController {
                 .data(response)
                 .build();
     }
+
+    @PreAuthorize("hasAuthority('user.write')")
     @PostMapping("/users")
     public ApiResponse<UserResponse> createUser(
             @Valid @RequestBody CreateUserRequest request) {
@@ -64,6 +67,7 @@ public class IdentityController {
         
     }
 
+    @PreAuthorize("hasAuthority('role.write')")
     @PostMapping("/roles")
     public ApiResponse<RoleResponse> createRole(
             @Valid @RequestBody CreateRoleRequest request) {
@@ -83,6 +87,7 @@ public class IdentityController {
                 .build();
     }
 
+    @PreAuthorize("hasAuthority('user.read')")
     @GetMapping("/organizations/{organizationId}/users")
     public ApiResponse<List<UserResponse>> users(
             @PathVariable UUID organizationId) {

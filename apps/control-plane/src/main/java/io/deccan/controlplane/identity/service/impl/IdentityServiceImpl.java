@@ -1,5 +1,12 @@
 package io.deccan.controlplane.identity.service.impl;
 
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import io.deccan.controlplane.identity.entity.Organization;
 import io.deccan.controlplane.identity.entity.Role;
 import io.deccan.controlplane.identity.entity.User;
@@ -12,11 +19,6 @@ import io.deccan.controlplane.identity.repository.RoleRepository;
 import io.deccan.controlplane.identity.repository.UserRepository;
 import io.deccan.controlplane.identity.service.IdentityService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +28,7 @@ public class IdentityServiceImpl implements IdentityService {
     private final OrganizationRepository organizationRepository;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public Organization createOrganization(String name, String slug) {
@@ -61,7 +64,7 @@ public class IdentityServiceImpl implements IdentityService {
         user.setFirstName(firstName);
         user.setLastName(lastName);
         user.setEmail(email);
-        user.setPasswordHash(passwordHash);
+        user.setPasswordHash(passwordEncoder.encode(passwordHash));
         user.setStatus(UserStatus.ACTIVE);
 
         return userRepository.save(user);
