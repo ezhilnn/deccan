@@ -58,3 +58,53 @@ Completed
 Status
 
 🟢 Repository foundation complete.
+
+## Milestone 4
+
+Completed
+
+- Production-ready Control Plane bootstrap
+- PostgreSQL integration
+- Flyway migration
+- OpenAPI
+- Actuator
+- Prometheus
+- Dockerized
+- Integrated with Docker Compose
+
+## Milestone 5
+
+- Enabled JPA Auditing
+- Added BaseEntity
+- UUID primary keys
+- Automatic createdAt/updatedAt timestamps
+
+### Milestone 6.2
+
+- Organization entity
+- User entity
+- Role entity
+- Permission entity
+- Entity relationships completed
+
+### Milestone 6.3
+
+- Identity repositories implemented
+- Repository query methods added
+- Default permissions bootstrap implemented
+
+### Milestone 6.4
+
+- Identity service implemented
+- Organization creation
+- User creation
+- Role creation
+- Identity business exceptions
+
+### Milestone 6.6
+
+- Standard API response model
+- Global exception handling
+- Validation error handling
+- Consistent HTTP error responses
+

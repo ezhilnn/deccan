@@ -1,11 +1,13 @@
 package io.deccan.controlplane.identity.controller;
 
+import io.deccan.controlplane.common.response.ApiResponse;
 import io.deccan.controlplane.identity.dto.request.CreateOrganizationRequest;
 import io.deccan.controlplane.identity.dto.request.CreateRoleRequest;
 import io.deccan.controlplane.identity.dto.request.CreateUserRequest;
 import io.deccan.controlplane.identity.dto.response.OrganizationResponse;
 import io.deccan.controlplane.identity.dto.response.RoleResponse;
 import io.deccan.controlplane.identity.dto.response.UserResponse;
+import io.deccan.controlplane.identity.entity.User;
 import io.deccan.controlplane.identity.mapper.IdentityMapper;
 import io.deccan.controlplane.identity.service.IdentityService;
 import jakarta.validation.Valid;
@@ -24,22 +26,27 @@ public class IdentityController {
     private final IdentityMapper mapper;
 
     @PostMapping("/organizations")
-    public OrganizationResponse createOrganization(
+    public ApiResponse<OrganizationResponse> createOrganization(
             @Valid @RequestBody CreateOrganizationRequest request) {
 
-        return mapper.toResponse(
+        OrganizationResponse response = mapper.toResponse(
                 identityService.createOrganization(
                         request.getName(),
                         request.getSlug()
                 )
         );
-    }
 
+        return ApiResponse.<OrganizationResponse>builder()
+                .status(201)
+                .message("Organization created successfully")
+                .data(response)
+                .build();
+    }
     @PostMapping("/users")
-    public UserResponse createUser(
+    public ApiResponse<UserResponse> createUser(
             @Valid @RequestBody CreateUserRequest request) {
 
-        return mapper.toResponse(
+        UserResponse response =  mapper.toResponse(
                 identityService.createUser(
                         request.getOrganizationId(),
                         request.getFirstName(),
@@ -47,29 +54,48 @@ public class IdentityController {
                         request.getEmail(),
                         request.getPassword()
                 )
+
         );
+        return ApiResponse.<UserResponse>builder()
+                .status(201)
+                .message("User created successfully")
+                .data(response)
+                .build();
+        
     }
 
     @PostMapping("/roles")
-    public RoleResponse createRole(
+    public ApiResponse<RoleResponse> createRole(
             @Valid @RequestBody CreateRoleRequest request) {
 
-        return mapper.toResponse(
+        RoleResponse response = mapper.toResponse(
                 identityService.createRole(
                         request.getOrganizationId(),
                         request.getName(),
                         request.getDescription()
                 )
         );
+
+        return ApiResponse.<RoleResponse>builder()
+                .status(201)
+                .message("Role created successfully")
+                .data(response)
+                .build();
     }
 
     @GetMapping("/organizations/{organizationId}/users")
-    public List<UserResponse> users(
+    public ApiResponse<List<UserResponse>> users(
             @PathVariable UUID organizationId) {
 
-        return identityService.getUsers(organizationId)
+        List<UserResponse> response = identityService.getUsers(organizationId)
                 .stream()
                 .map(mapper::toResponse)
                 .toList();
+
+        return ApiResponse.<List<UserResponse>>builder()
+                .status(200)
+                .message("Users fetched successfully")
+                .data(response)
+                .build();
     }
 }
