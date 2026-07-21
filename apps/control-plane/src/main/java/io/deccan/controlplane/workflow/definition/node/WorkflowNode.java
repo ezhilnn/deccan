@@ -10,10 +10,31 @@ public class WorkflowNode {
 
     private String id;
 
+    /**
+     * Unique node type registered in node_catalog.
+     * Example:
+     * manual-trigger
+     * http
+     * llm
+     * condition
+     */
     private String type;
 
-    private String connector;
+    /**
+     * UI label
+     */
+    private String name;
 
+    /**
+     * Position in workflow builder
+     */
+    private Integer x;
+
+    private Integer y;
+
+    /**
+     * Node configuration
+     */
     private JsonNode configuration;
 
 }
