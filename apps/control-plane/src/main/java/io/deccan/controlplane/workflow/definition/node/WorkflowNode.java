@@ -1,8 +1,13 @@
 package io.deccan.controlplane.workflow.definition.node;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.deccan.controlplane.workflow.definition.port.InputPort;
+import io.deccan.controlplane.workflow.definition.port.OutputPort;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -10,31 +15,24 @@ public class WorkflowNode {
 
     private String id;
 
-    /**
-     * Unique node type registered in node_catalog.
-     * Example:
-     * manual-trigger
-     * http
-     * llm
-     * condition
-     */
     private String type;
 
-    /**
-     * UI label
-     */
     private String name;
 
-    /**
-     * Position in workflow builder
-     */
     private Integer x;
 
     private Integer y;
 
-    /**
-     * Node configuration
-     */
     private JsonNode configuration;
+
+    /**
+     * Inputs consumed by this node.
+     */
+    private List<InputPort> inputs = new ArrayList<>();
+
+    /**
+     * Outputs produced by this node.
+     */
+    private List<OutputPort> outputs = new ArrayList<>();
 
 }

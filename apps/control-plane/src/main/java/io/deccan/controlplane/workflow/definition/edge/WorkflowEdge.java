@@ -7,8 +7,24 @@ import lombok.Setter;
 @Setter
 public class WorkflowEdge {
 
+    /**
+     * Source node id.
+     */
     private String source;
 
+    /**
+     * Source output port.
+     */
+    private String sourcePort;
+
+    /**
+     * Target node id.
+     */
     private String target;
+
+    /**
+     * Target input port.
+     */
+    private String targetPort;
 
 }
