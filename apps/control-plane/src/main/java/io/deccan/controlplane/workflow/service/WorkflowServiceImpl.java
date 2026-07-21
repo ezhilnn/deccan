@@ -23,6 +23,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import io.deccan.controlplane.workflow.event.model.WorkflowEvent;
+import io.deccan.controlplane.workflow.event.model.WorkflowEventType;
+import io.deccan.controlplane.workflow.event.publisher.WorkflowEventPublisher;
+import java.time.Instant;
+
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +41,8 @@ public class WorkflowServiceImpl implements WorkflowService {
     private final WorkflowValidator workflowValidator;
     private final WorkflowLifecycleService workflowLifecycleService;
     private final ObjectMapper objectMapper;
+    private final WorkflowEventPublisher workflowEventPublisher;
+
 
     @Override
     public Workflow createWorkflow(
@@ -64,6 +71,20 @@ public class WorkflowServiceImpl implements WorkflowService {
         workflow.setDescription(description);
         workflow.setStatus(WorkflowStatus.DRAFT);
         workflow.setCurrentVersion(1);
+        workflowEventPublisher.publish(
+
+        WorkflowEvent.builder()
+                .workflowId(workflow.getId())
+                .organizationId(
+                        organization.getId())
+                .version(1)
+                .type(
+                        WorkflowEventType.CREATED)
+                .timestamp(
+                        Instant.now())
+                .build()
+
+        );
 
         return workflowRepository.save(workflow);
 
@@ -160,6 +181,22 @@ public class WorkflowServiceImpl implements WorkflowService {
         //         WorkflowStatus.ACTIVE);
 
         workflowRepository.save(workflow);
+        workflowEventPublisher.publish(
+
+        WorkflowEvent.builder()
+                .workflowId(
+                        workflow.getId())
+                .organizationId(
+                        workflow.getOrganization().getId())
+                .version(
+                        version.getVersion())
+                .type(
+                        WorkflowEventType.PUBLISHED)
+                .timestamp(
+                        Instant.now())
+                .build()
+
+        );
 
         return version;
 
@@ -193,6 +230,21 @@ public class WorkflowServiceImpl implements WorkflowService {
         workflowLifecycleService.archive(workflow);
 
         workflowRepository.save(workflow);
+        workflowEventPublisher.publish(
+
+        WorkflowEvent.builder()
+                .workflowId(workflow.getId())
+                .organizationId(
+                        workflow.getOrganization().getId())
+                .version(
+                        workflow.getCurrentVersion())
+                .type(
+                        WorkflowEventType.ARCHIVED)
+                .timestamp(
+                        Instant.now())
+                .build()
+
+        );
 
         }
 
@@ -209,6 +261,21 @@ public class WorkflowServiceImpl implements WorkflowService {
         workflowLifecycleService.activate(workflow);
 
         workflowRepository.save(workflow);
+        workflowEventPublisher.publish(
+
+        WorkflowEvent.builder()
+                .workflowId(workflow.getId())
+                .organizationId(
+                        workflow.getOrganization().getId())
+                .version(
+                        workflow.getCurrentVersion())
+                .type(
+                        WorkflowEventType.ACTIVATED)
+                .timestamp(
+                        Instant.now())
+                .build()
+
+        );
 
         }
 
