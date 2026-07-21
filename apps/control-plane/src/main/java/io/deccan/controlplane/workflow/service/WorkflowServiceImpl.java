@@ -18,6 +18,7 @@ import io.deccan.controlplane.workflow.definition.validation.WorkflowValidator;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.util.List;
 import java.util.UUID;
+import io.deccan.controlplane.workflow.dto.response.WorkflowExportResponse;
 
 @Service
 @RequiredArgsConstructor
@@ -231,6 +232,53 @@ public class WorkflowServiceImpl implements WorkflowService {
         }
 
         workflowRepository.delete(workflow);
+
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public WorkflowExportResponse exportWorkflow(
+                UUID workflowId,
+                Integer version) {
+
+        Workflow workflow =
+                workflowRepository.findById(workflowId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException("Workflow not found"));
+
+        WorkflowVersion workflowVersion =
+                workflowVersionRepository
+                        .findByWorkflowAndVersion(workflow, version)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException("Workflow version not found"));
+
+        return WorkflowExportResponse.builder()
+                .workflowId(workflow.getId())
+                .workflowName(workflow.getName())
+                .version(workflowVersion.getVersion())
+                .definition(workflowVersion.getDefinition())
+                .build();
+
+        }
+
+        @Override
+        public Workflow importWorkflow(
+                UUID organizationId,
+                WorkflowExportResponse exported) {
+
+        Workflow workflow =
+                createWorkflow(
+                        organizationId,
+                        exported.getWorkflowName(),
+                        "Imported Workflow"
+                );
+
+        publishWorkflow(
+                workflow.getId(),
+                exported.getDefinition()
+        );
+
+        return workflow;
 
         }
 

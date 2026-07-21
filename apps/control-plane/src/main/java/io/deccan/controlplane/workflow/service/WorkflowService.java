@@ -1,5 +1,6 @@
 package io.deccan.controlplane.workflow.service;
 
+import io.deccan.controlplane.workflow.dto.response.WorkflowExportResponse;
 import io.deccan.controlplane.workflow.entity.Workflow;
 import io.deccan.controlplane.workflow.entity.WorkflowVersion;
 
@@ -46,5 +47,13 @@ public interface WorkflowService {
         Workflow getWorkflow(
                 UUID workflowId
         );
+
+        WorkflowExportResponse exportWorkflow(
+        UUID workflowId,
+        Integer version);
+
+        Workflow importWorkflow(
+                UUID organizationId,
+                WorkflowExportResponse workflow);
 
 }

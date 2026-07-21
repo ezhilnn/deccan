@@ -4,6 +4,7 @@ import io.deccan.controlplane.common.response.ApiResponse;
 import io.deccan.controlplane.workflow.dto.request.CreateWorkflowRequest;
 import io.deccan.controlplane.workflow.dto.request.PublishWorkflowRequest;
 import io.deccan.controlplane.workflow.dto.request.UpdateWorkflowRequest;
+import io.deccan.controlplane.workflow.dto.response.WorkflowExportResponse;
 import io.deccan.controlplane.workflow.dto.response.WorkflowResponse;
 import io.deccan.controlplane.workflow.dto.response.WorkflowVersionResponse;
 import io.deccan.controlplane.workflow.mapper.WorkflowMapper;
@@ -195,6 +196,50 @@ public class WorkflowController {
         return ApiResponse.<Void>builder()
                 .status(200)
                 .message("Workflow deleted successfully")
+                .build();
+
+        }
+
+        @PreAuthorize("hasAuthority('workflow.read')")
+        @GetMapping("/{workflowId}/export/{version}")
+        public ApiResponse<WorkflowExportResponse> exportWorkflow(
+
+                @PathVariable UUID workflowId,
+
+                @PathVariable Integer version) {
+
+        return ApiResponse.<WorkflowExportResponse>builder()
+                .status(200)
+                .message("Workflow exported successfully")
+                .data(
+                        workflowService.exportWorkflow(
+                                workflowId,
+                                version))
+                .build();
+
+        }
+        @PreAuthorize("hasAuthority('workflow.write')")
+        @PostMapping("/import/{organizationId}")
+        public ApiResponse<WorkflowResponse> importWorkflow(
+
+                @PathVariable UUID organizationId,
+
+                @Valid
+                @RequestBody WorkflowExportResponse request) {
+
+        WorkflowResponse response =
+                mapper.toResponse(
+
+                        workflowService.importWorkflow(
+                                organizationId,
+                                request)
+
+                );
+
+        return ApiResponse.<WorkflowResponse>builder()
+                .status(201)
+                .message("Workflow imported successfully")
+                .data(response)
                 .build();
 
         }
