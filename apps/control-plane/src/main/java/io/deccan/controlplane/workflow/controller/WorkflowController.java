@@ -3,6 +3,7 @@ package io.deccan.controlplane.workflow.controller;
 import io.deccan.controlplane.common.response.ApiResponse;
 import io.deccan.controlplane.workflow.dto.request.CreateWorkflowRequest;
 import io.deccan.controlplane.workflow.dto.request.PublishWorkflowRequest;
+import io.deccan.controlplane.workflow.dto.request.UpdateWorkflowRequest;
 import io.deccan.controlplane.workflow.dto.response.WorkflowResponse;
 import io.deccan.controlplane.workflow.dto.response.WorkflowVersionResponse;
 import io.deccan.controlplane.workflow.mapper.WorkflowMapper;
@@ -99,26 +100,103 @@ public class WorkflowController {
                 .build();
 
         }
-    @PreAuthorize("hasAuthority('workflow.read')")
-    @GetMapping("/{workflowId}/versions")
-    public ApiResponse<List<WorkflowVersionResponse>> versions(
+        @PreAuthorize("hasAuthority('workflow.read')")
+        @GetMapping("/{workflowId}/versions")
+        public ApiResponse<List<WorkflowVersionResponse>> versions(
 
-            @PathVariable UUID workflowId) {
+                @PathVariable UUID workflowId) {
 
-        List<WorkflowVersionResponse> response =
-                workflowService
-                        .getWorkflowVersions(workflowId)
-                        .stream()
-                        .map(versionMapper::toResponse)
-                        .toList();
+                List<WorkflowVersionResponse> response =
+                        workflowService
+                                .getWorkflowVersions(workflowId)
+                                .stream()
+                                .map(versionMapper::toResponse)
+                                .toList();
 
-        return ApiResponse
-                .<List<WorkflowVersionResponse>>builder()
+                return ApiResponse
+                        .<List<WorkflowVersionResponse>>builder()
+                        .status(200)
+                        .message("Workflow versions fetched successfully")
+                        .data(response)
+                        .build();
+
+        }
+        @PreAuthorize("hasAuthority('workflow.write')")
+        @PostMapping("/{workflowId}/archive")
+        public ApiResponse<Void> archive(
+                @PathVariable UUID workflowId){
+
+        workflowService.archiveWorkflow(workflowId);
+
+        return ApiResponse.<Void>builder()
                 .status(200)
-                .message("Workflow versions fetched successfully")
+                .message("Workflow archived successfully")
+                .build();
+
+        }
+        @PreAuthorize("hasAuthority('workflow.write')")
+        @PostMapping("/{workflowId}/activate")
+        public ApiResponse<Void> activate(
+                @PathVariable UUID workflowId){
+
+        workflowService.activateWorkflow(workflowId);
+
+        return ApiResponse.<Void>builder()
+                .status(200)
+                .message("Workflow activated successfully")
+                .build();
+
+        }
+
+                @PreAuthorize("hasAuthority('workflow.read')")
+        @GetMapping("/{workflowId}")
+        public ApiResponse<WorkflowResponse> getWorkflow(
+                @PathVariable UUID workflowId) {
+
+        WorkflowResponse response =
+                mapper.toResponse(
+                        workflowService.getWorkflow(workflowId));
+
+        return ApiResponse.<WorkflowResponse>builder()
+                .status(200)
+                .message("Workflow fetched successfully")
                 .data(response)
                 .build();
 
-    }
+        }
+        @PreAuthorize("hasAuthority('workflow.write')")
+        @PutMapping("/{workflowId}")
+        public ApiResponse<WorkflowResponse> updateWorkflow(
+                @PathVariable UUID workflowId,
+                @Valid @RequestBody UpdateWorkflowRequest request) {
+
+        WorkflowResponse response =
+                mapper.toResponse(
+                        workflowService.updateWorkflow(
+                                workflowId,
+                                request.getName(),
+                                request.getDescription()));
+
+        return ApiResponse.<WorkflowResponse>builder()
+                .status(200)
+                .message("Workflow updated successfully")
+                .data(response)
+                .build();
+
+        }
+
+        @PreAuthorize("hasAuthority('workflow.write')")
+        @DeleteMapping("/{workflowId}")
+        public ApiResponse<Void> deleteWorkflow(
+                @PathVariable UUID workflowId) {
+
+        workflowService.deleteWorkflow(workflowId);
+
+        return ApiResponse.<Void>builder()
+                .status(200)
+                .message("Workflow deleted successfully")
+                .build();
+
+        }
 
 }

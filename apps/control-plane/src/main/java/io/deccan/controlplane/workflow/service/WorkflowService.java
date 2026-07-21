@@ -9,24 +9,42 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 public interface WorkflowService {
 
-    Workflow createWorkflow(
-            UUID organizationId,
-            String name,
-            String description
-    );
+        Workflow createWorkflow(
+                UUID organizationId,
+                String name,
+                String description
+        );
 
-    List<Workflow> getWorkflows(
-            UUID organizationId
-    );
+        List<Workflow> getWorkflows(
+                UUID organizationId
+        );
 
-   
-WorkflowVersion publishWorkflow(
-        UUID workflowId,
-        JsonNode definition
-);
+        
+        WorkflowVersion publishWorkflow(
+                UUID workflowId,
+                JsonNode definition
+        );
 
-    List<WorkflowVersion> getWorkflowVersions(
-            UUID workflowId
-    );
+        List<WorkflowVersion> getWorkflowVersions(
+                UUID workflowId
+        );
+        void archiveWorkflow(
+                UUID workflowId);
+
+        void activateWorkflow(
+                        UUID workflowId);
+        Workflow updateWorkflow(
+                UUID workflowId,
+                String name,
+                String description
+        );
+
+        void deleteWorkflow(
+                UUID workflowId
+        );
+
+        Workflow getWorkflow(
+                UUID workflowId
+        );
 
 }

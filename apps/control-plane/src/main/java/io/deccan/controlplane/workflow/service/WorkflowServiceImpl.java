@@ -5,6 +5,7 @@ import io.deccan.controlplane.identity.exception.IdentityNotFoundException;
 import io.deccan.controlplane.identity.repository.OrganizationRepository;
 import io.deccan.controlplane.workflow.entity.Workflow;
 import io.deccan.controlplane.workflow.enums.WorkflowStatus;
+import io.deccan.controlplane.workflow.lifecycle.WorkflowLifecycleService;
 import io.deccan.controlplane.workflow.repository.WorkflowRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -28,7 +29,7 @@ public class WorkflowServiceImpl implements WorkflowService {
     private final OrganizationRepository organizationRepository;
     private final WorkflowVersionRepository workflowVersionRepository;
     private final WorkflowValidator workflowValidator;
-
+    private final WorkflowLifecycleService workflowLifecycleService;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -63,93 +64,174 @@ public class WorkflowServiceImpl implements WorkflowService {
 
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<Workflow> getWorkflows(
-            UUID organizationId) {
+        @Override
+        @Transactional(readOnly = true)
+        public List<Workflow> getWorkflows(
+                UUID organizationId) {
 
-        Organization organization =
-                organizationRepository.findById(organizationId)
+                Organization organization =
+                        organizationRepository.findById(organizationId)
+                                .orElseThrow(() ->
+                                        new IdentityNotFoundException("Organization not found"));
+
+                return workflowRepository.findByOrganization(
+                        organization);
+
+        }
+        @Override
+        public WorkflowVersion publishWorkflow(
+                UUID workflowId,
+                JsonNode definition){
+        Workflow workflow =
+                workflowRepository.findById(workflowId)
                         .orElseThrow(() ->
-                                new IdentityNotFoundException("Organization not found"));
+                                new IllegalArgumentException(
+                                        "Workflow not found"));
+        workflowLifecycleService.publish(workflow);
 
-        return workflowRepository.findByOrganization(
-                organization);
+        Integer nextVersion =
+                workflowVersionRepository
+                        .findFirstByWorkflowOrderByVersionDesc(workflow)
+                        .map(v -> v.getVersion() + 1)
+                        .orElse(1);
 
-    }
-    @Override
-public WorkflowVersion publishWorkflow(
-        UUID workflowId,
-        JsonNode definition){
-    Workflow workflow =
-            workflowRepository.findById(workflowId)
-                    .orElseThrow(() ->
-                            new IllegalArgumentException(
-                                    "Workflow not found"));
+        WorkflowVersion version =
+                new WorkflowVersion();
+        WorkflowDefinition workflowDefinition;
 
-    Integer nextVersion =
-            workflowVersionRepository
-                    .findFirstByWorkflowOrderByVersionDesc(workflow)
-                    .map(v -> v.getVersion() + 1)
-                    .orElse(1);
+        try {
 
-    WorkflowVersion version =
-            new WorkflowVersion();
-   WorkflowDefinition workflowDefinition;
-
-    try {
-
-        workflowDefinition =
-        objectMapper.treeToValue(
-                definition,
-                WorkflowDefinition.class);
+                workflowDefinition =
+                objectMapper.treeToValue(
+                        definition,
+                        WorkflowDefinition.class);
 
 
-    } catch (Exception ex) {
+        } catch (Exception ex) {
 
-        throw new IllegalArgumentException(
-                "Invalid workflow definition",
-                ex
-        );
+                throw new IllegalArgumentException(
+                        "Invalid workflow definition",
+                        ex
+                );
 
-    }
-      workflowValidator.validate(workflowDefinition);
+        }
+        workflowValidator.validate(workflowDefinition);
 
-        version.setWorkflow(workflow);
-        version.setVersion(nextVersion);
+                version.setWorkflow(workflow);
+                version.setVersion(nextVersion);
 
-        version.setDefinition(
-                objectMapper.valueToTree(workflowDefinition)
-        );
+                version.setDefinition(
+                        objectMapper.valueToTree(workflowDefinition)
+                );
 
-        version.setPublished(true);
+                version.setPublished(true);
 
-    version =
-            workflowVersionRepository.save(version);
+        version =
+                workflowVersionRepository.save(version);
 
-    workflow.setCurrentVersion(nextVersion);
-    workflow.setStatus(WorkflowStatus.ACTIVE);
+        workflow.setCurrentVersion(nextVersion);
+        // workflow.setStatus(
+        //         WorkflowStatus.ACTIVE);
 
-    workflowRepository.save(workflow);
+        workflowRepository.save(workflow);
 
-    return version;
+        return version;
 
-}
+        }
 
-@Override
-@Transactional(readOnly = true)
-public List<WorkflowVersion> getWorkflowVersions(
-        UUID workflowId) {
+        @Override
+        @Transactional(readOnly = true)
+        public List<WorkflowVersion> getWorkflowVersions(
+                UUID workflowId) {
 
-    Workflow workflow =
-            workflowRepository.findById(workflowId)
-                    .orElseThrow(() ->
-                            new IllegalArgumentException(
-                                    "Workflow not found"));
+        Workflow workflow =
+                workflowRepository.findById(workflowId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Workflow not found"));
 
-    return workflowVersionRepository
-            .findByWorkflowOrderByVersionDesc(workflow);
+        return workflowVersionRepository
+                .findByWorkflowOrderByVersionDesc(workflow);
 
-}
+        }
+        @Override
+        public void archiveWorkflow(
+                UUID workflowId) {
+
+        Workflow workflow =
+                workflowRepository.findById(workflowId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Workflow not found"));
+
+        workflowLifecycleService.archive(workflow);
+
+        workflowRepository.save(workflow);
+
+        }
+
+        @Override
+        public void activateWorkflow(
+                UUID workflowId) {
+
+        Workflow workflow =
+                workflowRepository.findById(workflowId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Workflow not found"));
+
+        workflowLifecycleService.activate(workflow);
+
+        workflowRepository.save(workflow);
+
+        }
+
+                @Override
+        @Transactional(readOnly = true)
+        public Workflow getWorkflow(UUID workflowId) {
+
+        return workflowRepository.findById(workflowId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Workflow not found"));
+
+        }
+
+        @Override
+        public Workflow updateWorkflow(
+                UUID workflowId,
+                String name,
+                String description) {
+
+        Workflow workflow =
+                workflowRepository.findById(workflowId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException("Workflow not found"));
+
+        workflow.setName(name);
+        workflow.setDescription(description);
+
+        return workflowRepository.save(workflow);
+
+        }
+
+        @Override
+        public void deleteWorkflow(
+                UUID workflowId) {
+
+        Workflow workflow =
+                workflowRepository.findById(workflowId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException("Workflow not found"));
+
+        if (workflow.getStatus() == WorkflowStatus.ACTIVE) {
+
+                throw new IllegalArgumentException(
+                        "Active workflow cannot be deleted");
+
+        }
+
+        workflowRepository.delete(workflow);
+
+        }
 
 }
