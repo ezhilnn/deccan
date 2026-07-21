@@ -3,6 +3,9 @@ package io.deccan.controlplane.workflow.service;
 import io.deccan.controlplane.workflow.dto.response.WorkflowExportResponse;
 import io.deccan.controlplane.workflow.entity.Workflow;
 import io.deccan.controlplane.workflow.entity.WorkflowVersion;
+import io.deccan.controlplane.workflow.enums.WorkflowStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.UUID;
@@ -16,10 +19,12 @@ public interface WorkflowService {
                 String description
         );
 
-        List<Workflow> getWorkflows(
-                UUID organizationId
+        Page<Workflow> getWorkflows(
+                UUID organizationId,
+                WorkflowStatus status,
+                Integer page,
+                Integer size
         );
-
         
         WorkflowVersion publishWorkflow(
                 UUID workflowId,

@@ -19,6 +19,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import java.util.List;
 import java.util.UUID;
 import io.deccan.controlplane.workflow.dto.response.WorkflowExportResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 @Service
 @RequiredArgsConstructor
@@ -67,16 +71,37 @@ public class WorkflowServiceImpl implements WorkflowService {
 
         @Override
         @Transactional(readOnly = true)
-        public List<Workflow> getWorkflows(
-                UUID organizationId) {
+        public Page<Workflow> getWorkflows(
+                UUID organizationId,
+                WorkflowStatus status,
+                Integer page,
+                Integer size) {
 
-                Organization organization =
-                        organizationRepository.findById(organizationId)
-                                .orElseThrow(() ->
-                                        new IdentityNotFoundException("Organization not found"));
+        Organization organization =
+                organizationRepository.findById(organizationId)
+                        .orElseThrow(() ->
+                                new IdentityNotFoundException(
+                                        "Organization not found"));
+
+        Pageable pageable =
+                PageRequest.of(
+                        page,
+                        size,
+                        Sort.by("createdAt").descending()
+                );
+
+        if (status == null) {
 
                 return workflowRepository.findByOrganization(
-                        organization);
+                        organization,
+                        pageable);
+
+        }
+
+        return workflowRepository.findByOrganizationAndStatus(
+                organization,
+                status,
+                pageable);
 
         }
         @Override

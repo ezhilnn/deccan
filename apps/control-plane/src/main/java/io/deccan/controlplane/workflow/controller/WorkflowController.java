@@ -4,9 +4,12 @@ import io.deccan.controlplane.common.response.ApiResponse;
 import io.deccan.controlplane.workflow.dto.request.CreateWorkflowRequest;
 import io.deccan.controlplane.workflow.dto.request.PublishWorkflowRequest;
 import io.deccan.controlplane.workflow.dto.request.UpdateWorkflowRequest;
+import io.deccan.controlplane.workflow.dto.response.PageResponse;
 import io.deccan.controlplane.workflow.dto.response.WorkflowExportResponse;
 import io.deccan.controlplane.workflow.dto.response.WorkflowResponse;
 import io.deccan.controlplane.workflow.dto.response.WorkflowVersionResponse;
+import io.deccan.controlplane.workflow.entity.Workflow;
+import io.deccan.controlplane.workflow.enums.WorkflowStatus;
 import io.deccan.controlplane.workflow.mapper.WorkflowMapper;
 import io.deccan.controlplane.workflow.mapper.WorkflowVersionMapper;
 import io.deccan.controlplane.workflow.service.WorkflowService;
@@ -14,7 +17,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import com.fasterxml.jackson.databind.JsonNode;
+import io.deccan.controlplane.workflow.dto.response.PageResponse;
+import io.deccan.controlplane.workflow.enums.WorkflowStatus;
+import org.springframework.data.domain.Page;
+
 
 import java.util.List;
 import java.util.UUID;
@@ -53,24 +59,48 @@ public class WorkflowController {
 
     }
 
-    @PreAuthorize("hasAuthority('workflow.read')")
-    @GetMapping("/organizations/{organizationId}")
-    public ApiResponse<List<WorkflowResponse>> getWorkflows(
-            @PathVariable UUID organizationId) {
+        @PreAuthorize("hasAuthority('workflow.read')")
+        @GetMapping("/organizations/{organizationId}")
+        public ApiResponse<PageResponse<WorkflowResponse>> getWorkflows(
 
-        List<WorkflowResponse> response =
-                workflowService.getWorkflows(organizationId)
-                        .stream()
-                        .map(mapper::toResponse)
-                        .toList();
+                @PathVariable UUID organizationId,
 
-        return ApiResponse.<List<WorkflowResponse>>builder()
-                .status(200)
-                .message("Workflows fetched successfully")
-                .data(response)
-                .build();
+                @RequestParam(required = false)
+                WorkflowStatus status,
 
-    }
+                @RequestParam(defaultValue = "0")
+                Integer page,
+
+                @RequestParam(defaultValue = "20")
+                Integer size) {
+
+                Page<Workflow> workflows =
+                        workflowService.getWorkflows(
+                                organizationId,
+                                status,
+                                page,
+                                size);
+
+                PageResponse<WorkflowResponse> response =
+                        PageResponse.<WorkflowResponse>builder()
+                                .content(
+                                        workflows.getContent()
+                                                .stream()
+                                                .map(mapper::toResponse)
+                                                .toList())
+                                .page(workflows.getNumber())
+                                .size(workflows.getSize())
+                                .totalElements(workflows.getTotalElements())
+                                .totalPages(workflows.getTotalPages())
+                                .build();
+
+                return ApiResponse.<PageResponse<WorkflowResponse>>builder()
+                        .status(200)
+                        .message("Workflows fetched successfully")
+                        .data(response)
+                        .build();
+
+        }
    @PreAuthorize("hasAuthority('workflow.write')")
         @PostMapping("/{workflowId}/publish")
         public ApiResponse<WorkflowVersionResponse> publishWorkflow(
