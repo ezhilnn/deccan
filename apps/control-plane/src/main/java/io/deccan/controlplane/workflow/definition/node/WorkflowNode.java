@@ -3,6 +3,7 @@ package io.deccan.controlplane.workflow.definition.node;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.deccan.controlplane.workflow.definition.port.InputPort;
 import io.deccan.controlplane.workflow.definition.port.OutputPort;
+import io.deccan.controlplane.workflow.expression.model.InputBinding;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -34,5 +35,7 @@ public class WorkflowNode {
      * Outputs produced by this node.
      */
     private List<OutputPort> outputs = new ArrayList<>();
+
+    private List<InputBinding> bindings = new ArrayList<>();
 
 }

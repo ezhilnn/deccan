@@ -1,6 +1,7 @@
 package io.deccan.controlplane.workflow.definition.validation;
 
 import io.deccan.controlplane.workflow.definition.WorkflowDefinition;
+import io.deccan.controlplane.workflow.expression.validation.ExpressionValidator;
 import io.deccan.controlplane.workflow.nodecatalog.NodeCatalogValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -12,6 +13,7 @@ public class WorkflowValidator {
     private final GraphValidator graphValidator;
 
     private final NodeCatalogValidator nodeCatalogValidator;
+    private final ExpressionValidator expressionValidator;
 
     public void validate(
             WorkflowDefinition definition) {
@@ -41,6 +43,7 @@ public class WorkflowValidator {
         graphValidator.validate(definition);
 
         nodeCatalogValidator.validate(definition);
+        expressionValidator.validate(definition);
 
     }
 
