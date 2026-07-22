@@ -9,6 +9,10 @@ import io.deccan.controlplane.workflow.repository.WorkflowRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import io.deccan.controlplane.execution.state.ExecutionStateMachine;
+import io.deccan.controlplane.execution.engine.WorkflowExecutor;
+import io.deccan.controlplane.workflow.entity.WorkflowVersion;
+import io.deccan.controlplane.workflow.repository.WorkflowVersionRepository;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -23,7 +27,11 @@ public class ExecutionServiceImpl
     private final WorkflowRepository workflowRepository;
 
     private final WorkflowExecutionRepository executionRepository;
+    private final ExecutionStateMachine executionStateMachine;
 
+    private final WorkflowVersionRepository workflowVersionRepository;
+
+    private final WorkflowExecutor workflowExecutor;
     @Override
     public WorkflowExecution executeWorkflow(
             UUID workflowId,
@@ -44,15 +52,51 @@ public class ExecutionServiceImpl
                 workflow.getCurrentVersion());
 
         execution.setStatus(
-                ExecutionStatus.PENDING);
+        ExecutionStatus.PENDING);
 
         execution.setStartedAt(
-                OffsetDateTime.now());
+        OffsetDateTime.now());
 
         execution.setInput(input);
 
-        return executionRepository.save(
+        execution = executionRepository.save(
                 execution);
+
+        executionStateMachine.start(
+        execution);
+
+        execution =
+                executionRepository.save(
+                        execution);
+
+        WorkflowVersion version =
+                workflowVersionRepository
+                        .findFirstByWorkflowOrderByVersionDesc(
+                                workflow)
+                        .orElseThrow();
+
+        try{
+
+            workflowExecutor.execute(
+                    version);
+
+            executionStateMachine.complete(
+                    execution);
+
+        }
+        catch(Exception ex){
+
+            executionStateMachine.fail(
+                    execution,
+                    ex.getMessage());
+
+        }
+
+        execution =
+                executionRepository.save(
+                        execution);
+
+        return execution;
 
     }
 
