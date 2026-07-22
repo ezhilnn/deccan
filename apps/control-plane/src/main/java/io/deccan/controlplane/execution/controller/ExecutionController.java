@@ -10,7 +10,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import io.deccan.controlplane.execution.entity.WorkflowExecution;
 
 import java.util.List;
 import java.util.UUID;

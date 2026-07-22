@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.deccan.controlplane.execution.entity.WorkflowExecution;
 import io.deccan.controlplane.execution.enums.ExecutionStatus;
 import io.deccan.controlplane.execution.repository.WorkflowExecutionRepository;
+import io.deccan.controlplane.execution.retry.RetryPolicyService;
 import io.deccan.controlplane.workflow.entity.Workflow;
 import io.deccan.controlplane.workflow.repository.WorkflowRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import io.deccan.controlplane.execution.event.model.ExecutionEvent;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
+import io.deccan.controlplane.execution.retry.RetryPolicy;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +36,7 @@ public class ExecutionServiceImpl
     private final ExecutionEventPublisher executionEventPublisher;
 
     private final WorkflowExecutor workflowExecutor;
+    private final RetryPolicyService retryPolicyService;
     @Override
     public WorkflowExecution executeWorkflow(
             UUID workflowId,
@@ -258,6 +261,16 @@ public class ExecutionServiceImpl
                                 .build()
 
                 );
+                RetryPolicy policy =
+                        RetryPolicy.builder()
+                                .maxAttempts(3)
+                                .delaySeconds(5)
+                                .exponentialBackoff(true)
+                                .build();
+
+                retryPolicyService.validateRetry(
+                        previous,
+                        policy);
 
                 return executeWorkflow(
 
@@ -268,5 +281,6 @@ public class ExecutionServiceImpl
                 );
 
         }
+        
 
 }
