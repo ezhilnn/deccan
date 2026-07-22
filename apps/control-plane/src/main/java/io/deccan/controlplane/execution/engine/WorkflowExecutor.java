@@ -31,12 +31,16 @@ public class WorkflowExecutor {
             for(WorkflowNode node
                     : definition.getNodes()){
 
+                NodeExecutor executor =
                 nodeExecutors.stream()
-                        .filter(e ->
-                                e.supports(node))
+                        .filter(e -> e.supports(node))
                         .findFirst()
-                        .orElseThrow()
-                        .execute(node);
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "No executor registered for node type: "
+                                                + node.getType()));
+
+            executor.execute(node);
 
             }
 

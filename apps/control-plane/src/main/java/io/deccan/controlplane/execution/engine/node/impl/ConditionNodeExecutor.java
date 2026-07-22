@@ -1,19 +1,22 @@
-package io.deccan.controlplane.execution.engine.node;
+package io.deccan.controlplane.execution.engine.node.impl;
 
+import io.deccan.controlplane.execution.engine.node.NodeExecutor;
 import io.deccan.controlplane.workflow.definition.node.WorkflowNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-public class NoOpNodeExecutor
+public class ConditionNodeExecutor
         implements NodeExecutor {
 
     @Override
     public boolean supports(
             WorkflowNode node){
 
-        return false;
+        return "condition"
+                .equalsIgnoreCase(node.getType());
+
     }
 
     @Override
@@ -21,9 +24,8 @@ public class NoOpNodeExecutor
             WorkflowNode node){
 
         log.info(
-                "Executing node [{}] type [{}]",
-                node.getId(),
-                node.getType());
+                "Executing Condition [{}]",
+                node.getId());
 
     }
 
