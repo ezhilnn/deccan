@@ -10,9 +10,12 @@ import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import io.deccan.controlplane.connector.capability.model.ConnectorCapability;
+import io.deccan.controlplane.connector.credential.entity.ConnectorCredential;
+
 import java.util.ArrayList;
 import java.util.List;
 import io.deccan.controlplane.connector.template.model.ConnectorTemplate;
+import io.deccan.controlplane.connector.credential.entity.ConnectorCredential;
 
 @Getter
 @Setter
@@ -53,5 +56,8 @@ public class Connector extends BaseEntity {
         @Transient
         private ConnectorTemplate template =
                 new ConnectorTemplate();
+    @ManyToOne(fetch = FetchType.LAZY)
+        @JoinColumn(name="credential_id")
+        private ConnectorCredential credential;
 
 }
