@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import io.deccan.controlplane.execution.context.ExecutionContext;
 import io.deccan.controlplane.execution.entity.WorkflowExecution;
+import io.deccan.controlplane.execution.graph.WorkflowGraph;
 
 import java.util.List;
 
@@ -19,6 +20,7 @@ public class WorkflowExecutor {
     private final ObjectMapper objectMapper;
 
     private final List<NodeExecutor> nodeExecutors;
+    private final WorkflowGraph workflowGraph;
 
     public void execute(
         WorkflowExecution execution,
@@ -36,23 +38,39 @@ public class WorkflowExecutor {
                         .input(execution.getInput())
                         .build();
 
-            for(WorkflowNode node
-                    : definition.getNodes()){
+            WorkflowNode current =
+        workflowGraph.findStartNode(
+                definition);
 
-                NodeExecutor executor =
-                nodeExecutors.stream()
-                        .filter(e -> e.supports(node))
-                        .findFirst()
-                        .orElseThrow(() ->
-                                new IllegalArgumentException(
-                                        "No executor registered for node type: "
-                                                + node.getType()));
+        while (current != null) {
+
+            final WorkflowNode currentNode = current;
+
+            NodeExecutor executor =
+                    nodeExecutors.stream()
+                            .filter(e ->
+                                    e.supports(currentNode))
+                            .findFirst()
+                            .orElseThrow(() ->
+                                    new IllegalArgumentException(
+                                            "No executor registered for "
+                                                    + currentNode.getType()));
 
             executor.execute(
-            node,
-            context);
+                    currentNode,
+                    context);
 
-            }
+            List<WorkflowNode> next =
+                    workflowGraph.nextNodes(
+                            definition,
+                            currentNode);
+
+            current =
+                    next.isEmpty()
+                            ? null
+                            : next.get(0);
+
+        }
 
         }
         catch (Exception ex){
