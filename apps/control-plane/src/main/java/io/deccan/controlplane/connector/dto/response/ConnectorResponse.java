@@ -13,6 +13,7 @@ import java.util.UUID;
 public class ConnectorResponse {
 
     private UUID id;
+    private UUID credentialId;
 
     private UUID organizationId;
 

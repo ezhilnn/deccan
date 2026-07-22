@@ -12,6 +12,15 @@ public class ConnectorMapper {
 
         return ConnectorResponse.builder()
                 .id(connector.getId())
+                .credentialId(
+
+                        connector.getCredential()==null
+
+                                ? null
+
+                                : connector.getCredential().getId()
+
+                )
                 .organizationId(
                         connector.getOrganization() == null
                                 ? null

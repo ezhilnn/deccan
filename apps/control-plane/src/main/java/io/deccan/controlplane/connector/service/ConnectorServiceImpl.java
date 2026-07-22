@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.deccan.controlplane.connector.validation.ConnectorValidator;
 import io.deccan.controlplane.connector.version.ConnectorVersionValidator;
+import io.deccan.controlplane.connector.credential.entity.ConnectorCredential;
+import io.deccan.controlplane.connector.credential.repository.ConnectorCredentialRepository;
 
 import java.util.List;
 import java.util.UUID;
@@ -26,6 +28,7 @@ public class ConnectorServiceImpl
     private final OrganizationRepository organizationRepository;
     private final ConnectorValidator connectorValidator;
     private final ConnectorVersionValidator connectorVersionValidator;
+    private final ConnectorCredentialRepository credentialRepository;
 
     @Override
     public Connector createConnector(
@@ -139,6 +142,47 @@ public class ConnectorServiceImpl
         return connectorRepository
                 .findByNameOrderByVersionDesc(
                         connectorName);
+
+        }
+        @Override
+        public Connector assignCredential(
+                UUID connectorId,
+                UUID credentialId) {
+
+        Connector connector =
+                connectorRepository.findById(connectorId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Connector not found"));
+
+        ConnectorCredential credential =
+                credentialRepository.findById(credentialId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Credential not found"));
+
+        if (!credential.getEnabled()) {
+
+                throw new IllegalArgumentException(
+                        "Credential is disabled");
+
+        }
+
+        if (connector.getOrganization() != null &&
+                !connector.getOrganization().getId()
+                        .equals(
+                                credential.getOrganization().getId())) {
+
+                throw new IllegalArgumentException(
+                        "Credential belongs to another organization");
+
+        }
+
+        connector.setCredential(
+                credential);
+
+        return connectorRepository.save(
+                connector);
 
         }
 

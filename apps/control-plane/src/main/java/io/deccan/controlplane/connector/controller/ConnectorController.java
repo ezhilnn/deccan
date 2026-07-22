@@ -161,5 +161,28 @@ public class ConnectorController {
                 .build();
 
         }
+        @PreAuthorize("hasAuthority('connector.write')")
+        @PostMapping("/{connectorId}/credential/{credentialId}")
+        public ApiResponse<ConnectorResponse> assignCredential(
+
+                @PathVariable UUID connectorId,
+
+                @PathVariable UUID credentialId){
+
+        return ApiResponse
+                .<ConnectorResponse>builder()
+                .status(200)
+                .message("Credential assigned successfully")
+                .data(
+                        mapper.toResponse(
+                                service.assignCredential(
+                                        connectorId,
+                                        credentialId
+                                )
+                        )
+                )
+                .build();
+
+        }
 
 }

@@ -20,8 +20,10 @@ public interface ConnectorService {
 
     List<Connector> getConnectors();
 
-    Connector getConnector(
-            UUID connectorId
+    Connector getConnector(UUID connectorId);
+
+    List<Connector> getConnectorVersions(
+            String connectorName
     );
 
     Connector updateConnector(
@@ -35,8 +37,10 @@ public interface ConnectorService {
     void deleteConnector(
             UUID connectorId
     );
-    List<Connector> getConnectorVersions(
-        String connectorName
-        );
+
+    Connector assignCredential(
+            UUID connectorId,
+            UUID credentialId
+    );
 
 }
