@@ -3,6 +3,8 @@ package io.deccan.controlplane.execution.engine.node;
 import io.deccan.controlplane.workflow.definition.node.WorkflowNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import io.deccan.controlplane.execution.context.ExecutionContext;
+
 
 @Slf4j
 @Component
@@ -18,12 +20,12 @@ public class NoOpNodeExecutor
 
     @Override
     public void execute(
-            WorkflowNode node){
+            WorkflowNode node,
+            ExecutionContext context){
 
         log.info(
-                "Executing node [{}] type [{}]",
-                node.getId(),
-                node.getType());
+                "Executing NOOP [{}]",
+                node.getId());
 
     }
 

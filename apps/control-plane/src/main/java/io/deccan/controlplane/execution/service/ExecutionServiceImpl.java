@@ -78,7 +78,8 @@ public class ExecutionServiceImpl
         try{
 
             workflowExecutor.execute(
-                    version);
+                execution,
+                version);
 
             executionStateMachine.complete(
                     execution);

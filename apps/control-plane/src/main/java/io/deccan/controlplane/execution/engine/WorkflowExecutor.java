@@ -7,6 +7,8 @@ import io.deccan.controlplane.workflow.definition.node.WorkflowNode;
 import io.deccan.controlplane.workflow.entity.WorkflowVersion;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import io.deccan.controlplane.execution.context.ExecutionContext;
+import io.deccan.controlplane.execution.entity.WorkflowExecution;
 
 import java.util.List;
 
@@ -19,7 +21,8 @@ public class WorkflowExecutor {
     private final List<NodeExecutor> nodeExecutors;
 
     public void execute(
-            WorkflowVersion version){
+        WorkflowExecution execution,
+        WorkflowVersion version){
 
         try{
 
@@ -27,6 +30,11 @@ public class WorkflowExecutor {
                     objectMapper.treeToValue(
                             version.getDefinition(),
                             WorkflowDefinition.class);
+            ExecutionContext context =
+                ExecutionContext.builder()
+                        .execution(execution)
+                        .input(execution.getInput())
+                        .build();
 
             for(WorkflowNode node
                     : definition.getNodes()){
@@ -40,7 +48,9 @@ public class WorkflowExecutor {
                                         "No executor registered for node type: "
                                                 + node.getType()));
 
-            executor.execute(node);
+            executor.execute(
+            node,
+            context);
 
             }
 

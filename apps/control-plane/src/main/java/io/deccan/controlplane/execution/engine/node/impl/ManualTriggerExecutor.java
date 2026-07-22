@@ -4,6 +4,11 @@ import io.deccan.controlplane.execution.engine.node.NodeExecutor;
 import io.deccan.controlplane.workflow.definition.node.WorkflowNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import io.deccan.controlplane.execution.context.ExecutionContext;
+import io.deccan.controlplane.execution.context.model.NodeResult;
+import io.deccan.controlplane.execution.context.model.NodeResult;
+
+
 
 @Slf4j
 @Component
@@ -21,11 +26,20 @@ public class ManualTriggerExecutor
 
     @Override
     public void execute(
-            WorkflowNode node) {
+            WorkflowNode node,
+            ExecutionContext context){
 
         log.info(
                 "Executing Manual Trigger [{}]",
                 node.getId());
+
+
+        context.getNodeOutputs().put(
+                node.getId(),
+                NodeResult.builder()
+                        .success(true)
+                        .data("Workflow triggered")
+                        .build());
 
     }
 
