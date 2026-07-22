@@ -141,5 +141,25 @@ public class ConnectorController {
                 .build();
 
     }
+        @PreAuthorize("hasAuthority('connector.read')")
+        @GetMapping("/{name}/versions")
+        public ApiResponse<List<ConnectorResponse>> versions(
+
+                @PathVariable String name){
+
+        List<ConnectorResponse> response =
+                service.getConnectorVersions(name)
+                        .stream()
+                        .map(mapper::toResponse)
+                        .toList();
+
+        return ApiResponse
+                .<List<ConnectorResponse>>builder()
+                .status(200)
+                .message("Connector versions fetched successfully")
+                .data(response)
+                .build();
+
+        }
 
 }

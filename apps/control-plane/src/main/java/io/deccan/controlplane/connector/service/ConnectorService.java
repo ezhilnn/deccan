@@ -35,5 +35,8 @@ public interface ConnectorService {
     void deleteConnector(
             UUID connectorId
     );
+    List<Connector> getConnectorVersions(
+        String connectorName
+        );
 
 }

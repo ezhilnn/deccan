@@ -31,5 +31,8 @@ public interface ConnectorRepository
     );
 
     List<Connector> findByEnabledTrue();
+    List<Connector> findByNameOrderByVersionDesc(
+                String name
+        );
 
 }

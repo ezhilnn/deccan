@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.deccan.controlplane.connector.validation.ConnectorValidator;
+import io.deccan.controlplane.connector.version.ConnectorVersionValidator;
 
 import java.util.List;
 import java.util.UUID;
@@ -24,6 +25,7 @@ public class ConnectorServiceImpl
 
     private final OrganizationRepository organizationRepository;
     private final ConnectorValidator connectorValidator;
+    private final ConnectorVersionValidator connectorVersionValidator;
 
     @Override
     public Connector createConnector(
@@ -65,6 +67,8 @@ public class ConnectorServiceImpl
         connector.setEnabled(true);
         connector.setConfigurationSchema(configurationSchema);
         connectorValidator.validate(connector);
+        connectorVersionValidator.validate(
+        version);
 
         return connectorRepository.save(connector);
 
@@ -107,6 +111,8 @@ public class ConnectorServiceImpl
         connector.setType(type);
         connector.setConfigurationSchema(configurationSchema);
         connector.setEnabled(enabled);
+        connectorVersionValidator.validate(
+        connector.getVersion());
 
         return connectorRepository.save(connector);
 
@@ -125,5 +131,15 @@ public class ConnectorServiceImpl
         connectorRepository.delete(connector);
 
     }
+    @Override
+        @Transactional(readOnly = true)
+        public List<Connector> getConnectorVersions(
+                String connectorName){
+
+        return connectorRepository
+                .findByNameOrderByVersionDesc(
+                        connectorName);
+
+        }
 
 }
