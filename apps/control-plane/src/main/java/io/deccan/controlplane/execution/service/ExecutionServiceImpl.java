@@ -13,7 +13,8 @@ import io.deccan.controlplane.execution.state.ExecutionStateMachine;
 import io.deccan.controlplane.execution.engine.WorkflowExecutor;
 import io.deccan.controlplane.workflow.entity.WorkflowVersion;
 import io.deccan.controlplane.workflow.repository.WorkflowVersionRepository;
-
+import io.deccan.controlplane.execution.event.ExecutionEventPublisher;
+import io.deccan.controlplane.execution.event.model.ExecutionEvent;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -30,6 +31,7 @@ public class ExecutionServiceImpl
     private final ExecutionStateMachine executionStateMachine;
 
     private final WorkflowVersionRepository workflowVersionRepository;
+    private final ExecutionEventPublisher executionEventPublisher;
 
     private final WorkflowExecutor workflowExecutor;
     @Override
@@ -68,6 +70,25 @@ public class ExecutionServiceImpl
         execution =
                 executionRepository.save(
                         execution);
+        executionEventPublisher.publish(
+
+        ExecutionEvent.builder()
+
+                .executionId(
+                        execution.getId())
+
+                .workflowId(
+                        workflow.getId())
+
+                .type(
+                        "EXECUTION_STARTED")
+
+                .timestamp(
+                        OffsetDateTime.now())
+
+                .build()
+
+        );
 
         WorkflowVersion version =
                 workflowVersionRepository
@@ -83,6 +104,25 @@ public class ExecutionServiceImpl
 
             executionStateMachine.complete(
                     execution);
+            executionEventPublisher.publish(
+
+                    ExecutionEvent.builder()
+
+                            .executionId(
+                                    execution.getId())
+
+                            .workflowId(
+                                    workflow.getId())
+
+                            .type(
+                                    "EXECUTION_COMPLETED")
+
+                            .timestamp(
+                                    OffsetDateTime.now())
+
+                            .build()
+
+            );
 
         }
         catch(Exception ex){
@@ -90,6 +130,25 @@ public class ExecutionServiceImpl
             executionStateMachine.fail(
                     execution,
                     ex.getMessage());
+                    executionEventPublisher.publish(
+
+                ExecutionEvent.builder()
+
+                        .executionId(
+                                execution.getId())
+
+                        .workflowId(
+                                workflow.getId())
+
+                        .type(
+                                "EXECUTION_FAILED")
+
+                        .timestamp(
+                                OffsetDateTime.now())
+
+                        .build()
+
+        );
 
         }
 
