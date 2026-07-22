@@ -4,14 +4,22 @@ import io.deccan.controlplane.execution.engine.node.NodeExecutor;
 import io.deccan.controlplane.workflow.definition.node.WorkflowNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import lombok.RequiredArgsConstructor;
+import io.deccan.controlplane.execution.connector.ConnectorRequest;
+import io.deccan.controlplane.execution.connector.ConnectorRuntime;
 import io.deccan.controlplane.execution.context.ExecutionContext;
 import io.deccan.controlplane.execution.context.model.NodeResult;
+import java.util.List;
+import io.deccan.controlplane.execution.connector.ConnectorResponse;
 
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
+
 public class HttpNodeExecutor
         implements NodeExecutor {
+        private final List<ConnectorRuntime> connectorRuntimes;
 
     @Override
     public boolean supports(
@@ -31,17 +39,45 @@ public class HttpNodeExecutor
                 "Executing HTTP node [{}]",
                 node.getId());
 
-        context.getNodeOutputs().put(
-        node.getId(),
-        NodeResult.builder()
-                .success(true)
-                .data(
-                        java.util.Map.of(
-                                "status",200,
-                                "body","Mock HTTP response"
-                        )
-                )
-                .build());
+        ConnectorRuntime runtime =
+        connectorRuntimes.stream()
+                .filter(r ->
+                        r.supports("http"))
+                .findFirst()
+                .orElseThrow();
+
+            ConnectorResponse response =
+                    runtime.execute(
+
+                            ConnectorRequest.builder()
+
+                                    .connector("http")
+
+                                    .configuration(
+                                            node.getConfiguration())
+
+                                    .build()
+
+                    );
+
+            context.getNodeOutputs().put(
+
+                    node.getId(),
+
+                    NodeResult.builder()
+
+                            .success(
+                                    response.isSuccess())
+
+                            .data(
+                                    response.getBody())
+
+                            .error(
+                                    response.getError())
+
+                            .build()
+
+            );
 
     }
 

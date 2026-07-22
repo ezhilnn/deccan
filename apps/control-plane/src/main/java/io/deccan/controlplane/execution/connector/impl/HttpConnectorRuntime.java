@@ -1,42 +1,76 @@
 package io.deccan.controlplane.execution.connector.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.deccan.controlplane.execution.connector.ConnectorRequest;
 import io.deccan.controlplane.execution.connector.ConnectorResponse;
 import io.deccan.controlplane.execution.connector.ConnectorRuntime;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
 @Component
-public class HttpConnectorRuntime
-        implements ConnectorRuntime {
+@RequiredArgsConstructor
+public class HttpConnectorRuntime implements ConnectorRuntime {
+
+    private final RestClient restClient;
 
     @Override
-    public boolean supports(
-            String connector){
-
+    public boolean supports(String connector) {
         return "http".equalsIgnoreCase(connector);
-
     }
 
     @Override
-    public ConnectorResponse execute(
-            ConnectorRequest request){
+    public ConnectorResponse execute(ConnectorRequest request) {
+
+        JsonNode configuration = request.getConfiguration();
+
+        String method = configuration
+                .path("method")
+                .asText("GET")
+                .toUpperCase();
+
+        String url = configuration
+                .path("url")
+                .asText();
+
+        if (url.isBlank()) {
+            throw new IllegalArgumentException("URL is required");
+        }
+
+        HttpMethod httpMethod;
+
+        try {
+            httpMethod = HttpMethod.valueOf(method);
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException(
+                    "Unsupported HTTP method: " + method);
+        }
+
+        Object response = restClient
+                .method(httpMethod)
+                .uri(url)
+                .retrieve()
+                .body(Object.class);
+
+        Map<String, Object> result = new HashMap<>();
+
+        result.put("status", 200);
+        result.put("body", response);
 
         log.info(
-                "Executing HTTP connector");
+                "HTTP connector executed {} {}",
+                method,
+                url);
 
         return ConnectorResponse.builder()
                 .success(true)
-                .body(
-                        Map.of(
-                                "status",200,
-                                "body","Mock HTTP Response"
-                        ))
+                .body(result)
                 .build();
-
     }
-
 }
