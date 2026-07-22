@@ -71,22 +71,21 @@ public class WorkflowServiceImpl implements WorkflowService {
         workflow.setDescription(description);
         workflow.setStatus(WorkflowStatus.DRAFT);
         workflow.setCurrentVersion(1);
-        workflowEventPublisher.publish(
+       // Save first
+        workflow = workflowRepository.save(workflow);
 
+        // Now publish
+        workflowEventPublisher.publish(
         WorkflowEvent.builder()
                 .workflowId(workflow.getId())
-                .organizationId(
-                        organization.getId())
-                .version(1)
-                .type(
-                        WorkflowEventType.CREATED)
-                .timestamp(
-                        Instant.now())
+                .organizationId(workflow.getOrganization().getId())
+                .version(workflow.getCurrentVersion())
+                .type(WorkflowEventType.CREATED)
+                .timestamp(Instant.now())
                 .build()
-
         );
 
-        return workflowRepository.save(workflow);
+        return workflow;
 
     }
 
