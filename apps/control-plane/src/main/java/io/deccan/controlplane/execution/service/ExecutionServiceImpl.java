@@ -189,37 +189,83 @@ public class ExecutionServiceImpl
 
     }
 
-    @Override
+        @Override
         public void cancelExecution(
                 UUID executionId) {
 
-        WorkflowExecution execution =
-                executionRepository.findById(
-                        executionId)
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Execution not found"));
+                WorkflowExecution execution =
+                        executionRepository.findById(
+                                executionId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Execution not found"));
 
-        executionStateMachine.cancel(
-                execution);
+                executionStateMachine.cancel(
+                        execution);
 
-        executionRepository.save(
-                execution);
+                executionRepository.save(
+                        execution);
 
-        executionEventPublisher.publish(
+                executionEventPublisher.publish(
+
+                        ExecutionEvent.builder()
+                                .executionId(
+                                        execution.getId())
+                                .workflowId(
+                                        execution.getWorkflow().getId())
+                                .type(
+                                        "EXECUTION_CANCELLED")
+                                .timestamp(
+                                        OffsetDateTime.now())
+                                .build()
+
+                );
+
+        }
+        @Override
+        public WorkflowExecution retryExecution(
+                UUID executionId) {
+
+                WorkflowExecution previous =
+                        executionRepository.findById(
+                                executionId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Execution not found"));
+
+                if (previous.getStatus() != ExecutionStatus.FAILED) {
+
+                        throw new IllegalStateException(
+                                "Only failed executions can be retried");
+
+                }
+                executionEventPublisher.publish(
 
                 ExecutionEvent.builder()
-                        .executionId(
-                                execution.getId())
-                        .workflowId(
-                                execution.getWorkflow().getId())
-                        .type(
-                                "EXECUTION_CANCELLED")
-                        .timestamp(
-                                OffsetDateTime.now())
-                        .build()
 
-        );
+                                .executionId(
+                                        previous.getId())
+
+                                .workflowId(
+                                        previous.getWorkflow().getId())
+
+                                .type(
+                                        "EXECUTION_RETRY_REQUESTED")
+
+                                .timestamp(
+                                        OffsetDateTime.now())
+
+                                .build()
+
+                );
+
+                return executeWorkflow(
+
+                        previous.getWorkflow().getId(),
+
+                        previous.getInput()
+
+                );
 
         }
 

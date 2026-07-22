@@ -22,5 +22,7 @@ public interface ExecutionService {
     );
     void cancelExecution(
         UUID executionId);
+    WorkflowExecution retryExecution(
+        UUID executionId);
 
 }

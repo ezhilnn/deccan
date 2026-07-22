@@ -3,12 +3,14 @@ package io.deccan.controlplane.execution.controller;
 import io.deccan.controlplane.common.response.ApiResponse;
 import io.deccan.controlplane.execution.dto.request.ExecutionRequest;
 import io.deccan.controlplane.execution.dto.response.ExecutionResponse;
+import io.deccan.controlplane.execution.entity.WorkflowExecution;
 import io.deccan.controlplane.execution.mapper.ExecutionMapper;
 import io.deccan.controlplane.execution.service.ExecutionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import io.deccan.controlplane.execution.entity.WorkflowExecution;
 
 import java.util.List;
 import java.util.UUID;
@@ -107,13 +109,35 @@ public class ExecutionController {
                 @PathVariable
                 UUID executionId){
 
-        executionService.cancelExecution(
-                executionId);
+                executionService.cancelExecution(
+                        executionId);
 
-        return ApiResponse.<Void>builder()
-                .status(200)
-                .message("Execution cancelled successfully")
-                .build();
+                return ApiResponse.<Void>builder()
+                        .status(200)
+                        .message("Execution cancelled successfully")
+                        .build();
+
+
+        }
+
+        @PreAuthorize("hasAuthority('workflow.execute')")
+        @PostMapping("/{executionId}/retry")
+        public ApiResponse<ExecutionResponse> retry(
+
+                @PathVariable
+                UUID executionId){
+
+                WorkflowExecution execution =
+                        executionService.retryExecution(
+                                executionId);
+
+                return ApiResponse.<ExecutionResponse>builder()
+                        .status(201)
+                        .message("Execution retried successfully")
+                        .data(
+                                mapper.toResponse(
+                                        execution))
+                        .build();
 
         }
 
