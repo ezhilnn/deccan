@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import io.deccan.controlplane.execution.context.ExecutionContext;
 import io.deccan.controlplane.execution.entity.WorkflowExecution;
 import io.deccan.controlplane.execution.graph.WorkflowGraph;
+import io.deccan.controlplane.execution.routing.ExecutionRouter;
 
 import java.util.List;
 
@@ -21,6 +22,7 @@ public class WorkflowExecutor {
 
     private final List<NodeExecutor> nodeExecutors;
     private final WorkflowGraph workflowGraph;
+    private final ExecutionRouter executionRouter;
 
     public void execute(
         WorkflowExecution execution,
@@ -66,9 +68,15 @@ public class WorkflowExecutor {
                             currentNode);
 
             current =
-                    next.isEmpty()
-                            ? null
-                            : next.get(0);
+            executionRouter.selectNextNode(
+
+                    currentNode,
+
+                    next,
+
+                    context
+
+            );
 
         }
 
