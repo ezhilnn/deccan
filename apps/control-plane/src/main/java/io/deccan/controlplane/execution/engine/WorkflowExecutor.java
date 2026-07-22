@@ -11,6 +11,8 @@ import io.deccan.controlplane.execution.context.ExecutionContext;
 import io.deccan.controlplane.execution.entity.WorkflowExecution;
 import io.deccan.controlplane.execution.graph.WorkflowGraph;
 import io.deccan.controlplane.execution.routing.ExecutionRouter;
+import io.deccan.controlplane.execution.node.entity.NodeExecution;
+import io.deccan.controlplane.execution.node.service.NodeExecutionService;
 
 import java.util.List;
 
@@ -19,6 +21,7 @@ import java.util.List;
 public class WorkflowExecutor {
 
     private final ObjectMapper objectMapper;
+    private final NodeExecutionService nodeExecutionService;
 
     private final List<NodeExecutor> nodeExecutors;
     private final WorkflowGraph workflowGraph;
@@ -48,35 +51,52 @@ public class WorkflowExecutor {
 
             final WorkflowNode currentNode = current;
 
-            NodeExecutor executor =
-                    nodeExecutors.stream()
-                            .filter(e ->
-                                    e.supports(currentNode))
-                            .findFirst()
-                            .orElseThrow(() ->
-                                    new IllegalArgumentException(
-                                            "No executor registered for "
-                                                    + currentNode.getType()));
+           NodeExecutor executor =
+        nodeExecutors.stream()
+                .filter(e -> e.supports(currentNode))
+                .findFirst()
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "No executor registered for node type: "
+                                        + currentNode.getType()));
 
-            executor.execute(
-                    currentNode,
-                    context);
+                    NodeExecution nodeExecution =
+                            nodeExecutionService.start(
+                                    execution,
+                                    currentNode);
 
-            List<WorkflowNode> next =
-                    workflowGraph.nextNodes(
-                            definition,
-                            currentNode);
+                    try {
 
-            current =
-            executionRouter.selectNextNode(
+                        executor.execute(
+                                currentNode,
+                                context);
 
-                    currentNode,
+                        nodeExecutionService.complete(
+                                nodeExecution,
+                                context.getNodeOutputs()
+                                        .get(currentNode.getId()));
 
-                    next,
+                    }
+                    catch (Exception ex) {
 
-                    context
+                        nodeExecutionService.fail(
+                                nodeExecution,
+                                ex.getMessage());
 
-            );
+                        throw ex;
+
+                    }
+
+                    List<WorkflowNode> next =
+                            workflowGraph.nextNodes(
+                                    definition,
+                                    currentNode);
+
+                    current =
+                            executionRouter.selectNextNode(
+                                    currentNode,
+                                    next,
+                                    context);
 
         }
 
