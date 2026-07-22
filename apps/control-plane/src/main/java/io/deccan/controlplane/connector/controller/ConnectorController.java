@@ -11,6 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/connectors")
@@ -29,21 +30,16 @@ public class ConnectorController {
             @RequestBody
             CreateConnectorRequest request){
 
-        ConnectorResponse response=
+        ConnectorResponse response =
                 mapper.toResponse(
 
                         service.createConnector(
 
                                 request.getOrganizationId(),
-
                                 request.getName(),
-
                                 request.getDisplayName(),
-
                                 request.getType(),
-
                                 request.getVersion(),
-
                                 request.getConfigurationSchema()
 
                         )
@@ -63,8 +59,7 @@ public class ConnectorController {
     @GetMapping
     public ApiResponse<List<ConnectorResponse>> getAll(){
 
-        List<ConnectorResponse> response=
-
+        List<ConnectorResponse> response =
                 service.getConnectors()
                         .stream()
                         .map(mapper::toResponse)
@@ -75,6 +70,74 @@ public class ConnectorController {
                 .status(200)
                 .message("Connectors fetched successfully")
                 .data(response)
+                .build();
+
+    }
+
+    @PreAuthorize("hasAuthority('connector.read')")
+    @GetMapping("/{connectorId}")
+    public ApiResponse<ConnectorResponse> get(
+
+            @PathVariable UUID connectorId){
+
+        return ApiResponse
+                .<ConnectorResponse>builder()
+                .status(200)
+                .message("Connector fetched successfully")
+                .data(
+                        mapper.toResponse(
+                                service.getConnector(connectorId)))
+                .build();
+
+    }
+
+    @PreAuthorize("hasAuthority('connector.write')")
+    @PutMapping("/{connectorId}")
+    public ApiResponse<ConnectorResponse> update(
+
+            @PathVariable UUID connectorId,
+
+            @Valid
+            @RequestBody
+            CreateConnectorRequest request){
+
+        return ApiResponse
+                .<ConnectorResponse>builder()
+                .status(200)
+                .message("Connector updated successfully")
+                .data(
+
+                        mapper.toResponse(
+
+                                service.updateConnector(
+
+                                        connectorId,
+                                        request.getDisplayName(),
+                                        request.getType(),
+                                        request.getConfigurationSchema(),
+                                        true
+
+                                )
+
+                        )
+
+                )
+                .build();
+
+    }
+
+    @PreAuthorize("hasAuthority('connector.write')")
+    @DeleteMapping("/{connectorId}")
+    public ApiResponse<Void> delete(
+
+            @PathVariable UUID connectorId){
+
+        service.deleteConnector(connectorId);
+
+        return ApiResponse
+                .<Void>builder()
+                .status(200)
+                .message("Connector deleted successfully")
                 .build();
 
     }

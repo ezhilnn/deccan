@@ -86,5 +86,41 @@ public class ConnectorServiceImpl
                                 "Connector not found"));
 
     }
+    @Override
+    public Connector updateConnector(
+            UUID connectorId,
+            String displayName,
+            ConnectorType type,
+            JsonNode configurationSchema,
+            Boolean enabled) {
+
+        Connector connector =
+                connectorRepository.findById(connectorId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Connector not found"));
+
+        connector.setDisplayName(displayName);
+        connector.setType(type);
+        connector.setConfigurationSchema(configurationSchema);
+        connector.setEnabled(enabled);
+
+        return connectorRepository.save(connector);
+
+    }
+
+    @Override
+    public void deleteConnector(
+            UUID connectorId) {
+
+        Connector connector =
+                connectorRepository.findById(connectorId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Connector not found"));
+
+        connectorRepository.delete(connector);
+
+    }
 
 }

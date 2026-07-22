@@ -24,4 +24,16 @@ public interface ConnectorService {
             UUID connectorId
     );
 
+    Connector updateConnector(
+            UUID connectorId,
+            String displayName,
+            ConnectorType type,
+            JsonNode configurationSchema,
+            Boolean enabled
+    );
+
+    void deleteConnector(
+            UUID connectorId
+    );
+
 }
