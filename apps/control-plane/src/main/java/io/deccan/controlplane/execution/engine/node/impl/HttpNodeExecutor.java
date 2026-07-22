@@ -7,9 +7,10 @@ import org.springframework.stereotype.Component;
 import lombok.RequiredArgsConstructor;
 import io.deccan.controlplane.execution.connector.ConnectorRequest;
 import io.deccan.controlplane.execution.connector.ConnectorRuntime;
+import io.deccan.controlplane.execution.connector.constants.ConnectorNames;
+import io.deccan.controlplane.execution.connector.resolver.ConnectorRuntimeResolver;
 import io.deccan.controlplane.execution.context.ExecutionContext;
 import io.deccan.controlplane.execution.context.model.NodeResult;
-import java.util.List;
 import io.deccan.controlplane.execution.connector.ConnectorResponse;
 
 
@@ -19,8 +20,7 @@ import io.deccan.controlplane.execution.connector.ConnectorResponse;
 
 public class HttpNodeExecutor
         implements NodeExecutor {
-        private final List<ConnectorRuntime> connectorRuntimes;
-
+    private final ConnectorRuntimeResolver connectorRuntimeResolver;
     @Override
     public boolean supports(
             WorkflowNode node){
@@ -40,11 +40,8 @@ public class HttpNodeExecutor
                 node.getId());
 
         ConnectorRuntime runtime =
-        connectorRuntimes.stream()
-                .filter(r ->
-                        r.supports("http"))
-                .findFirst()
-                .orElseThrow();
+        connectorRuntimeResolver.resolve(
+        ConnectorNames.HTTP);
 
             ConnectorResponse response =
                     runtime.execute(
