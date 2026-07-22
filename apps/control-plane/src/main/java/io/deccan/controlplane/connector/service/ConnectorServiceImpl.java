@@ -9,6 +9,7 @@ import io.deccan.controlplane.identity.repository.OrganizationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import io.deccan.controlplane.connector.validation.ConnectorValidator;
 
 import java.util.List;
 import java.util.UUID;
@@ -22,6 +23,7 @@ public class ConnectorServiceImpl
     private final ConnectorRepository connectorRepository;
 
     private final OrganizationRepository organizationRepository;
+    private final ConnectorValidator connectorValidator;
 
     @Override
     public Connector createConnector(
@@ -62,6 +64,7 @@ public class ConnectorServiceImpl
         connector.setVersion(version);
         connector.setEnabled(true);
         connector.setConfigurationSchema(configurationSchema);
+        connectorValidator.validate(connector);
 
         return connectorRepository.save(connector);
 

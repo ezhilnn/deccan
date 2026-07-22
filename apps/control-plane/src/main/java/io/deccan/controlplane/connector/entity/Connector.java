@@ -9,6 +9,10 @@ import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import io.deccan.controlplane.connector.capability.model.ConnectorCapability;
+import java.util.ArrayList;
+import java.util.List;
+import io.deccan.controlplane.connector.template.model.ConnectorTemplate;
 
 @Getter
 @Setter
@@ -43,5 +47,11 @@ public class Connector extends BaseEntity {
             columnDefinition = "jsonb"
     )
     private JsonNode configurationSchema;
+    @Transient
+    private List<ConnectorCapability> capabilities =
+            new ArrayList<>();
+        @Transient
+        private ConnectorTemplate template =
+                new ConnectorTemplate();
 
 }
