@@ -18,5 +18,8 @@ public interface WorkflowExecutionRepository
     List<WorkflowExecution>
     findByStatus(
             ExecutionStatus status);
+    boolean existsByWorkflowAndStatus(
+        Workflow workflow,
+        ExecutionStatus status);
 
 }

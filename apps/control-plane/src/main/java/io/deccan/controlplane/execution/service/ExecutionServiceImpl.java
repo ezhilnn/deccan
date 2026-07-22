@@ -47,6 +47,14 @@ public class ExecutionServiceImpl
                         .orElseThrow(() ->
                                 new IllegalArgumentException(
                                         "Workflow not found"));
+        if (executionRepository.existsByWorkflowAndStatus(
+        workflow,
+        ExecutionStatus.RUNNING)) {
+
+                throw new IllegalStateException(
+                        "Workflow already has a running execution");
+
+        }
 
         WorkflowExecution execution =
                 new WorkflowExecution();
