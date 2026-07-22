@@ -98,6 +98,23 @@ public class ExecutionController {
                 .data(response)
                 .build();
 
+
     }
+    @PreAuthorize("hasAuthority('workflow.execute')")
+        @PostMapping("/{executionId}/cancel")
+        public ApiResponse<Void> cancel(
+
+                @PathVariable
+                UUID executionId){
+
+        executionService.cancelExecution(
+                executionId);
+
+        return ApiResponse.<Void>builder()
+                .status(200)
+                .message("Execution cancelled successfully")
+                .build();
+
+        }
 
 }

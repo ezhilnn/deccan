@@ -189,4 +189,38 @@ public class ExecutionServiceImpl
 
     }
 
+    @Override
+        public void cancelExecution(
+                UUID executionId) {
+
+        WorkflowExecution execution =
+                executionRepository.findById(
+                        executionId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Execution not found"));
+
+        executionStateMachine.cancel(
+                execution);
+
+        executionRepository.save(
+                execution);
+
+        executionEventPublisher.publish(
+
+                ExecutionEvent.builder()
+                        .executionId(
+                                execution.getId())
+                        .workflowId(
+                                execution.getWorkflow().getId())
+                        .type(
+                                "EXECUTION_CANCELLED")
+                        .timestamp(
+                                OffsetDateTime.now())
+                        .build()
+
+        );
+
+        }
+
 }

@@ -20,5 +20,7 @@ public interface ExecutionService {
     List<WorkflowExecution> getExecutions(
             UUID workflowId
     );
+    void cancelExecution(
+        UUID executionId);
 
 }
