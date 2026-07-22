@@ -30,4 +30,6 @@ public class ConnectorResponse {
 
     private Instant createdAt;
 
+    private Instant updatedAt;
+
 }

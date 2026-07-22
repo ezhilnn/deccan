@@ -10,21 +10,18 @@ import java.util.UUID;
 public interface ConnectorService {
 
     Connector createConnector(
-
             UUID organizationId,
-
             String name,
-
             String displayName,
-
             ConnectorType type,
-
             String version,
-
             JsonNode configurationSchema
-
     );
 
     List<Connector> getConnectors();
+
+    Connector getConnector(
+            UUID connectorId
+    );
 
 }

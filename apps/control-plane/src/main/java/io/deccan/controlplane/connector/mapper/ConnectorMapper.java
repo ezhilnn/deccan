@@ -8,12 +8,12 @@ import org.springframework.stereotype.Component;
 public class ConnectorMapper {
 
     public ConnectorResponse toResponse(
-            Connector connector){
+            Connector connector) {
 
         return ConnectorResponse.builder()
                 .id(connector.getId())
                 .organizationId(
-                        connector.getOrganization()==null
+                        connector.getOrganization() == null
                                 ? null
                                 : connector.getOrganization().getId())
                 .name(connector.getName())
@@ -21,9 +21,9 @@ public class ConnectorMapper {
                 .type(connector.getType())
                 .version(connector.getVersion())
                 .enabled(connector.getEnabled())
-                .configurationSchema(
-                        connector.getConfigurationSchema())
+                .configurationSchema(connector.getConfigurationSchema())
                 .createdAt(connector.getCreatedAt())
+                .updatedAt(connector.getUpdatedAt())
                 .build();
 
     }

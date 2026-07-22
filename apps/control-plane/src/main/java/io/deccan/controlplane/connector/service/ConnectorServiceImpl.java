@@ -19,70 +19,71 @@ import java.util.UUID;
 public class ConnectorServiceImpl
         implements ConnectorService {
 
-    private final ConnectorRepository repository;
+    private final ConnectorRepository connectorRepository;
 
     private final OrganizationRepository organizationRepository;
 
     @Override
     public Connector createConnector(
-
             UUID organizationId,
-
             String name,
-
             String displayName,
-
             ConnectorType type,
-
             String version,
-
             JsonNode configurationSchema) {
 
-        if(repository.existsByNameAndVersion(
+        if (connectorRepository.existsByNameAndVersion(
                 name,
-                version)){
+                version)) {
 
             throw new IllegalArgumentException(
                     "Connector already exists");
 
         }
 
-        Connector connector=new Connector();
+        Connector connector = new Connector();
 
-        if(organizationId!=null){
+        if (organizationId != null) {
 
-            Organization organization=
+            Organization organization =
                     organizationRepository.findById(
-                            organizationId)
-                            .orElseThrow();
+                                    organizationId)
+                            .orElseThrow(() ->
+                                    new IllegalArgumentException(
+                                            "Organization not found"));
 
-            connector.setOrganization(
-                    organization);
+            connector.setOrganization(organization);
 
         }
 
         connector.setName(name);
-
         connector.setDisplayName(displayName);
-
         connector.setType(type);
-
         connector.setVersion(version);
-
         connector.setEnabled(true);
+        connector.setConfigurationSchema(configurationSchema);
 
-        connector.setConfigurationSchema(
-                configurationSchema);
-
-        return repository.save(connector);
+        return connectorRepository.save(connector);
 
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Connector> getConnectors(){
+    public List<Connector> getConnectors() {
 
-        return repository.findAll();
+        return connectorRepository.findAll();
+
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Connector getConnector(
+            UUID connectorId) {
+
+        return connectorRepository.findById(connectorId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Connector not found"));
 
     }
 
