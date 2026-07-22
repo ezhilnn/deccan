@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
+import io.deccan.controlplane.execution.event.constants.EventTopics;
 
 @Slf4j
 @Component
@@ -12,8 +13,7 @@ import org.springframework.stereotype.Component;
 public class KafkaExecutionEventPublisher
         implements ExecutionEventPublisher {
 
-    private static final String TOPIC =
-            "deccan.execution.events";
+    private static final String TOPIC = EventTopics.EXECUTION_EVENTS;
 
     private final KafkaTemplate<String,Object>
             kafkaTemplate;
