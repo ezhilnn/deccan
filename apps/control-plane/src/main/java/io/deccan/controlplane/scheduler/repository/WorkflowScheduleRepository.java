@@ -13,5 +13,6 @@ public interface WorkflowScheduleRepository
 
     List<WorkflowSchedule> findByWorkflow(
             Workflow workflow);
+    List<WorkflowSchedule> findByEnabledTrue();
 
 }

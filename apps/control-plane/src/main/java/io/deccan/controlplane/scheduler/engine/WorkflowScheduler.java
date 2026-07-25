@@ -25,6 +25,14 @@ public class WorkflowScheduler {
 
     public void register(
             WorkflowSchedule schedule) {
+        
+        if (schedules.containsKey(
+                schedule.getId())) {
+
+            unregister(
+                    schedule.getId());
+
+        }
 
         ScheduledFuture<?> future =
                 taskScheduler.schedule(
