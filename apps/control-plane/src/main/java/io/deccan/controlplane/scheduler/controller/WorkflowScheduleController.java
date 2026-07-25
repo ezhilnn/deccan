@@ -68,5 +68,42 @@ public class WorkflowScheduleController {
                 .build();
 
     }
+    @PostMapping("/{scheduleId}/enable")
+    @PreAuthorize("hasAuthority('workflow.update')")
+    public ApiResponse<Void> enable(
 
+            @PathVariable
+            UUID workflowId,
+
+            @PathVariable
+            UUID scheduleId) {
+
+        service.enableSchedule(
+                scheduleId);
+
+        return ApiResponse.<Void>builder()
+                .status(200)
+                .message("Schedule enabled successfully")
+                .build();
+
+    }
+    @PostMapping("/{scheduleId}/disable")
+    @PreAuthorize("hasAuthority('workflow.update')")
+    public ApiResponse<Void> disable(
+
+            @PathVariable
+            UUID workflowId,
+
+            @PathVariable
+            UUID scheduleId) {
+
+        service.disableSchedule(
+                scheduleId);
+
+        return ApiResponse.<Void>builder()
+                .status(200)
+                .message("Schedule disabled successfully")
+                .build();
+
+}
 }

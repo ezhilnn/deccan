@@ -13,5 +13,10 @@ public interface WorkflowScheduleService {
 
     List<WorkflowSchedule> getSchedules(
             UUID workflowId);
+    void enableSchedule(
+        UUID scheduleId);
+
+    void disableSchedule(
+            UUID scheduleId);
 
 }
