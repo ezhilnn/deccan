@@ -105,5 +105,51 @@ public class WorkflowScheduleController {
                 .message("Schedule disabled successfully")
                 .build();
 
-}
+    }
+    @PutMapping("/{scheduleId}")
+    @PreAuthorize("hasAuthority('workflow.update')")
+    public ApiResponse<WorkflowScheduleResponse> update(
+
+            @PathVariable
+            UUID workflowId,
+
+            @PathVariable
+            UUID scheduleId,
+
+            @Valid
+            @RequestBody
+            CreateScheduleRequest request){
+
+        WorkflowSchedule schedule =
+                service.updateSchedule(
+                        scheduleId,
+                        mapper.toEntity(request));
+
+        return ApiResponse.<WorkflowScheduleResponse>builder()
+                .status(200)
+                .message("Schedule updated successfully")
+                .data(
+                        mapper.toResponse(schedule))
+                .build();
+
+    }
+    @DeleteMapping("/{scheduleId}")
+    @PreAuthorize("hasAuthority('workflow.update')")
+    public ApiResponse<Void> delete(
+
+            @PathVariable
+            UUID workflowId,
+
+            @PathVariable
+            UUID scheduleId){
+
+        service.deleteSchedule(
+                scheduleId);
+
+        return ApiResponse.<Void>builder()
+                .status(200)
+                .message("Schedule deleted successfully")
+                .build();
+
+    }
 }

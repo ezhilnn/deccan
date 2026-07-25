@@ -18,5 +18,11 @@ public interface WorkflowScheduleService {
 
     void disableSchedule(
             UUID scheduleId);
+    WorkflowSchedule updateSchedule(
+        UUID scheduleId,
+        WorkflowSchedule schedule);
+
+    void deleteSchedule(
+            UUID scheduleId);
 
 }

@@ -108,6 +108,58 @@ public class WorkflowScheduleServiceImpl
         workflowScheduler.unregister(
                 schedule.getId());
 
-}
+    }
+    @Override
+    public WorkflowSchedule updateSchedule(
+            UUID scheduleId,
+            WorkflowSchedule updated) {
+
+        WorkflowSchedule existing =
+                scheduleRepository.findById(scheduleId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Schedule not found"));
+
+        existing.setType(
+                updated.getType());
+
+        existing.setCronExpression(
+                updated.getCronExpression());
+
+        existing.setEnabled(
+                updated.getEnabled());
+
+        existing =
+                scheduleRepository.save(existing);
+
+        workflowScheduler.unregister(
+                existing.getId());
+
+        if (existing.getType() == ScheduleType.CRON &&
+                Boolean.TRUE.equals(existing.getEnabled())) {
+
+            workflowScheduler.register(existing);
+
+        }
+
+        return existing;
+
+    }
+    @Override
+    public void deleteSchedule(
+            UUID scheduleId) {
+
+        WorkflowSchedule schedule =
+                scheduleRepository.findById(scheduleId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Schedule not found"));
+
+        workflowScheduler.unregister(
+                schedule.getId());
+
+        scheduleRepository.delete(schedule);
+
+    }
 
 }
