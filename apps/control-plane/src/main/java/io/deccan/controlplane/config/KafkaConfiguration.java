@@ -104,5 +104,42 @@ public class KafkaConfiguration {
         return factory;
 
     }
+    @Bean
+        public ConcurrentKafkaListenerContainerFactory<String, String>
+        stringKafkaListenerContainerFactory() {
+
+        Map<String,Object> config =
+                new HashMap<>();
+
+        config.put(
+                ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                "kafka:9092");
+
+        config.put(
+                ConsumerConfig.GROUP_ID_CONFIG,
+                "deccan-workflow-trigger");
+
+        config.put(
+                ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
+                StringDeserializer.class);
+
+        config.put(
+                ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+                StringDeserializer.class);
+
+        ConsumerFactory<String,String> consumerFactory =
+                new DefaultKafkaConsumerFactory<>(config);
+
+        ConcurrentKafkaListenerContainerFactory<
+                String,
+                String> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+
+        factory.setConsumerFactory(
+                consumerFactory);
+
+        return factory;
+
+        }
 
 }
