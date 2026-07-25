@@ -42,6 +42,9 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/actuator/**"
                         ).permitAll()
+                        .requestMatchers(
+                                "/api/webhooks/**")
+                        .permitAll()
 
                         .anyRequest()
                         .authenticated())
