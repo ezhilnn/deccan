@@ -14,7 +14,7 @@ public class WorkflowEventPublisher {
     private static final String TOPIC =
             "workflow-events";
 
-    private final KafkaTemplate<String, WorkflowEvent> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     public void publish(
             WorkflowEvent event){

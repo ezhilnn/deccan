@@ -11,16 +11,16 @@ import org.springframework.stereotype.Component;
 public class ExecutionEventConsumer {
 
     @KafkaListener(
-            topics = EventTopics.EXECUTION_EVENTS,
-            groupId = "deccan-control-plane")
-    public void consume(
-            ExecutionEvent event){
+        topics = EventTopics.EXECUTION_EVENTS,
+                groupId = "deccan-control-plane")
+        public void consume(
+                ExecutionEvent event) {
 
         log.info(
                 "Received execution event [{}] for execution [{}]",
                 event.getType(),
                 event.getExecutionId());
 
-    }
+        }
 
 }

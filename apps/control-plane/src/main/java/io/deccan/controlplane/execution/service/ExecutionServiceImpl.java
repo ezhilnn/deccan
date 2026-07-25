@@ -115,6 +115,9 @@ public class ExecutionServiceImpl
 
             executionStateMachine.complete(
                     execution);
+         execution =
+                executionRepository.save(
+                        execution);
             executionEventPublisher.publish(
 
                     ExecutionEvent.builder()
@@ -138,34 +141,31 @@ public class ExecutionServiceImpl
         }
         catch(Exception ex){
 
-            executionStateMachine.fail(
-                    execution,
-                    ex.getMessage());
-                    executionEventPublisher.publish(
+                        executionStateMachine.fail(
+                        execution,
+                        ex.getMessage());
+                                 execution =
+                executionRepository.save(
+                        execution);
 
-                ExecutionEvent.builder()
+                executionEventPublisher.publish(
 
-                        .executionId(
-                                execution.getId())
+                        ExecutionEvent.builder()
+                                .executionId(execution.getId())
+                                .workflowId(workflow.getId())
+                                .type("EXECUTION_FAILED")
+                                .timestamp(OffsetDateTime.now())
+                                .build()
 
-                        .workflowId(
-                                workflow.getId())
+                );
 
-                        .type(
-                                "EXECUTION_FAILED")
-
-                        .timestamp(
-                                OffsetDateTime.now())
-
-                        .build()
-
-        );
+                throw ex;
 
         }
 
-        execution =
-                executionRepository.save(
-                        execution);
+        // execution =
+        //         executionRepository.save(
+        //                 execution);
 
         return execution;
 
