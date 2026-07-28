@@ -38,5 +38,7 @@ public interface ExecutionTaskRepository
             org.springframework.data.domain.Pageable pageable
 
     );
+    List<ExecutionTask> findByExecutionIdOrderByCreatedAt(
+        UUID executionId);
 
 }

@@ -1,16 +1,22 @@
 package io.deccan.controlplane.task.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.deccan.controlplane.execution.entity.WorkflowExecution;
 import io.deccan.controlplane.task.entity.ExecutionTask;
 import io.deccan.controlplane.task.enums.TaskStatus;
+import io.deccan.controlplane.task.factory.ExecutionTaskFactory;
 import io.deccan.controlplane.task.repository.ExecutionTaskRepository;
 import io.deccan.controlplane.worker.entity.Worker;
 import io.deccan.controlplane.worker.repository.WorkerRepository;
+import io.deccan.controlplane.workflow.definition.WorkflowDefinition;
+import io.deccan.controlplane.workflow.entity.WorkflowVersion;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.Comparator;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -23,6 +29,39 @@ public class ExecutionTaskServiceImpl
 
     private final WorkerRepository workerRepository;
 
+    private final ExecutionTaskFactory taskFactory;
+
+    private final ObjectMapper objectMapper;
+
+    @Override
+    public List<ExecutionTask> createTasks(
+            WorkflowExecution execution,
+            WorkflowVersion version) {
+
+        try {
+
+            WorkflowDefinition definition =
+                    objectMapper.treeToValue(
+                            version.getDefinition(),
+                            WorkflowDefinition.class);
+
+            List<ExecutionTask> tasks =
+                    taskFactory.createTasks(
+                            execution,
+                            definition);
+
+            return taskRepository.saveAll(tasks);
+
+        } catch (Exception ex) {
+
+            throw new IllegalStateException(
+                    "Unable to create execution tasks",
+                    ex);
+
+        }
+
+    }
+
     @Override
     public ExecutionTask leaseTask(
             UUID workerId) {
@@ -33,37 +72,62 @@ public class ExecutionTaskServiceImpl
                                 new IllegalArgumentException(
                                         "Worker not found"));
 
-        Instant now =
-                Instant.now();
-
         ExecutionTask task =
-        taskRepository
-                .leaseNextTask(
+                taskRepository
+                        .leaseNextTask(
+                                TaskStatus.PENDING,
+                                PageRequest.of(0, 1))
+                        .stream()
+                        .findFirst()
+                        .orElseThrow(() ->
+                                new IllegalStateException(
+                                        "No pending task available"));
 
-                        TaskStatus.PENDING,
+        task.setWorker(worker);
 
-                        org.springframework.data.domain.PageRequest.of(
-                                0,
-                                1)
-
-                )
-                .stream()
-                .findFirst()
-                .orElseThrow(() ->
-                        new IllegalStateException(
-                                "No pending task available"));
-
-        task.setWorker(
-                worker);
-
-        task.setStatus(
-                TaskStatus.LEASED);
+        task.setStatus(TaskStatus.LEASED);
 
         task.setLeaseUntil(
-                now.plusSeconds(60));
+                Instant.now().plusSeconds(60));
 
-        return taskRepository.save(
-                task);
+        return taskRepository.save(task);
+
+    }
+
+    @Override
+    public void completeTask(
+            UUID taskId) {
+
+        ExecutionTask task =
+                taskRepository.findById(taskId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Task not found"));
+
+        task.setStatus(TaskStatus.COMPLETED);
+
+        task.setLeaseUntil(null);
+
+        taskRepository.save(task);
+
+    }
+
+    @Override
+    public void failTask(
+            UUID taskId,
+            String reason) {
+
+        ExecutionTask task =
+                taskRepository.findById(taskId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Task not found"));
+
+        task.setStatus(TaskStatus.FAILED);
+
+        task.setLeaseUntil(null);
+
+        taskRepository.save(task);
 
     }
 
