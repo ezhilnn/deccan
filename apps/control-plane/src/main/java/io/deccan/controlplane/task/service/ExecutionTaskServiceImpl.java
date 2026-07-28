@@ -37,16 +37,21 @@ public class ExecutionTaskServiceImpl
                 Instant.now();
 
         ExecutionTask task =
-                taskRepository
-                        .findByStatus(
-                                TaskStatus.PENDING)
-                        .stream()
-                        .min(
-                                Comparator.comparing(
-                                        ExecutionTask::getCreatedAt))
-                        .orElseThrow(() ->
-                                new IllegalStateException(
-                                        "No pending task available"));
+        taskRepository
+                .leaseNextTask(
+
+                        TaskStatus.PENDING,
+
+                        org.springframework.data.domain.PageRequest.of(
+                                0,
+                                1)
+
+                )
+                .stream()
+                .findFirst()
+                .orElseThrow(() ->
+                        new IllegalStateException(
+                                "No pending task available"));
 
         task.setWorker(
                 worker);
