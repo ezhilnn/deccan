@@ -19,9 +19,9 @@ public interface ExecutionTaskRepository
     List<ExecutionTask> findByStatus(
             TaskStatus status);
 
-    List<ExecutionTask> findByStatusAndLeaseUntilBefore(
-            TaskStatus status,
-            Instant now);
+    // List<ExecutionTask> findByStatusAndLeaseUntilBefore(
+    //         TaskStatus status,
+    //         Instant now);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
@@ -46,5 +46,12 @@ public interface ExecutionTaskRepository
         TaskStatus status);
     List<ExecutionTask> findByExecutionId(
         UUID executionId);
+    List<ExecutionTask> findByStatusAndLeaseUntilBefore(
+
+            TaskStatus status,
+
+            Instant leaseUntil
+
+    );
 
 }

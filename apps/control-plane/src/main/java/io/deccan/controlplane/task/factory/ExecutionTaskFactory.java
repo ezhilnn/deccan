@@ -33,6 +33,18 @@ public class ExecutionTaskFactory {
             task.setNodeId(
                     node.getId());
 
+            task.setNodeType(
+                    node.getType());
+
+            task.setConfiguration(
+                    node.getConfiguration());
+
+            task.setStatus(
+                    TaskStatus.PENDING);
+
+            task.setRetryCount(
+                    0);
+
             task.setStatus(
                     TaskStatus.PENDING);
 

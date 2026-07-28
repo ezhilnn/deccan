@@ -87,6 +87,8 @@ public class ExecutionTaskServiceImpl
         task.setWorker(worker);
 
         task.setStatus(TaskStatus.LEASED);
+        task.setStartedAt(
+        Instant.now());
 
         task.setLeaseUntil(
                 Instant.now().plusSeconds(60));
@@ -141,6 +143,11 @@ public class ExecutionTaskServiceImpl
 
         task.setStatus(
                 TaskStatus.COMPLETED);
+        task.setCompletedAt(
+        Instant.now());
+
+        task.setLeaseUntil(
+                null);
 
         task.setLeaseUntil(
                 null);
@@ -175,6 +182,21 @@ public class ExecutionTaskServiceImpl
 
         task.setStatus(
                 TaskStatus.FAILED);
+
+        task.setRetryCount(
+            task.getRetryCount()+1);
+
+        task.setErrorMessage(
+                errorMessage);
+
+        task.setCompletedAt(
+                Instant.now());
+
+        task.setStatus(
+                TaskStatus.FAILED);
+
+        task.setLeaseUntil(
+                null);
 
         task.setLeaseUntil(
                 null);

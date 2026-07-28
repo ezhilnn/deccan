@@ -7,6 +7,9 @@ import io.deccan.controlplane.worker.entity.Worker;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import com.fasterxml.jackson.databind.JsonNode;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 
@@ -34,5 +37,21 @@ public class ExecutionTask extends BaseEntity {
     private TaskStatus status;
 
     private Instant leaseUntil;
+    
+    @Column(nullable = false)
+    private String nodeType;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(nullable = false)
+    private JsonNode configuration;
+
+    private String errorMessage;
+
+    private Instant startedAt;
+
+    private Instant completedAt;
+
+    @Column(nullable = false)
+    private Integer retryCount = 0;
 
 }
