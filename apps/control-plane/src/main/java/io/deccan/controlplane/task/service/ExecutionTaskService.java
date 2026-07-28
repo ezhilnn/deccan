@@ -32,4 +32,5 @@ public interface ExecutionTaskService {
             String errorMessage);
     List<ExecutionTask> getTasks(
         UUID executionId);
+    ExecutionTask leaseNextTask();
 }

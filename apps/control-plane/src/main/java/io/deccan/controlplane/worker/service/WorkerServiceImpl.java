@@ -73,5 +73,19 @@ public class WorkerServiceImpl
                 worker);
 
     }
+    @Override
+    @Transactional(readOnly = true)
+    public Worker findAvailableWorker(){
+
+        return repository
+                .findByStatusOrderByLastHeartbeatDesc(
+                        WorkerStatus.ONLINE)
+                .stream()
+                .findFirst()
+                .orElseThrow(() ->
+                        new IllegalStateException(
+                                "No online worker available"));
+
+    }
 
 }

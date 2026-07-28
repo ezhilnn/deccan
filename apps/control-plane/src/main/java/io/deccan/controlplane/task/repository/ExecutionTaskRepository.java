@@ -2,6 +2,8 @@ package io.deccan.controlplane.task.repository;
 
 import io.deccan.controlplane.task.entity.ExecutionTask;
 import io.deccan.controlplane.task.enums.TaskStatus;
+import io.deccan.controlplane.worker.entity.Worker;
+import io.deccan.controlplane.worker.enums.WorkerStatus;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -53,5 +55,8 @@ public interface ExecutionTaskRepository
             Instant leaseUntil
 
     );
+    long countByWorkerIdAndStatus(
+        UUID workerId,
+        TaskStatus status);
 
 }

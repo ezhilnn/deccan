@@ -16,5 +16,6 @@ public interface WorkerService {
     List<Worker> list();
     Worker heartbeat(
         UUID workerId);
+    Worker findAvailableWorker();
 
 }

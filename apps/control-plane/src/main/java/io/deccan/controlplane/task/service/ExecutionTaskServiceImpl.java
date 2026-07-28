@@ -7,7 +7,9 @@ import io.deccan.controlplane.task.enums.TaskStatus;
 import io.deccan.controlplane.task.factory.ExecutionTaskFactory;
 import io.deccan.controlplane.task.repository.ExecutionTaskRepository;
 import io.deccan.controlplane.worker.entity.Worker;
+import io.deccan.controlplane.worker.enums.WorkerStatus;
 import io.deccan.controlplane.worker.repository.WorkerRepository;
+import io.deccan.controlplane.worker.service.WorkerService;
 import io.deccan.controlplane.workflow.definition.WorkflowDefinition;
 import io.deccan.controlplane.workflow.entity.WorkflowVersion;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 import io.deccan.controlplane.execution.enums.ExecutionStatus;
+import io.deccan.controlplane.execution.repository.WorkflowExecutionRepository;
+
 import java.util.UUID;
 
 @Service
@@ -32,7 +36,11 @@ public class ExecutionTaskServiceImpl
 
     private final ExecutionTaskFactory taskFactory;
 
+    private final WorkerService workerService;
+
     private final ObjectMapper objectMapper;
+
+    private final WorkflowExecutionRepository executionRepository;
 
     @Override
     public List<ExecutionTask> createTasks(
@@ -92,6 +100,9 @@ public class ExecutionTaskServiceImpl
 
         task.setLeaseUntil(
                 Instant.now().plusSeconds(60));
+        worker.setStatus(
+            WorkerStatus.BUSY);
+        workerRepository.save(worker);
 
         return taskRepository.save(task);
 
@@ -149,8 +160,6 @@ public class ExecutionTaskServiceImpl
         task.setLeaseUntil(
                 null);
 
-        task.setLeaseUntil(
-                null);
 
         taskRepository.save(task);
 
@@ -167,6 +176,18 @@ public class ExecutionTaskServiceImpl
 
             execution.setStatus(
                     ExecutionStatus.COMPLETED);
+            executionRepository.save(
+                execution);
+
+        }
+        Worker worker =
+        task.getWorker();
+
+        if(worker != null){
+
+            worker.setStatus(
+                    WorkerStatus.ONLINE);
+            workerRepository.save(worker);
 
         }
 
@@ -180,8 +201,8 @@ public class ExecutionTaskServiceImpl
                 taskRepository.findById(taskId)
                         .orElseThrow();
 
-        task.setStatus(
-                TaskStatus.FAILED);
+        // task.setStatus(
+        //         TaskStatus.FAILED);
 
         task.setRetryCount(
             task.getRetryCount()+1);
@@ -198,8 +219,6 @@ public class ExecutionTaskServiceImpl
         task.setLeaseUntil(
                 null);
 
-        task.setLeaseUntil(
-                null);
 
         taskRepository.save(task);
 
@@ -208,6 +227,18 @@ public class ExecutionTaskServiceImpl
 
         execution.setStatus(
                 ExecutionStatus.FAILED);
+        executionRepository.save(
+            execution);
+        Worker worker =
+        task.getWorker();
+
+        if(worker != null){
+
+            worker.setStatus(
+                    WorkerStatus.ONLINE);
+            workerRepository.save(worker);
+
+        }
 
     }
     @Override
@@ -217,6 +248,16 @@ public class ExecutionTaskServiceImpl
 
         return taskRepository.findByExecutionId(
                 executionId);
+
+    }
+    @Override
+    public ExecutionTask leaseNextTask(){
+
+        Worker worker =
+                workerService.findAvailableWorker();
+
+        return leaseTask(
+                worker.getId());
 
     }
 
