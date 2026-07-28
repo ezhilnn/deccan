@@ -16,7 +16,7 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/workflows/{workflowId}/schedules")
+@RequestMapping("/workflows/{workflowId}/schedules")
 public class WorkflowScheduleController {
 
     private final WorkflowScheduleService service;

@@ -4,6 +4,7 @@ import io.deccan.controlplane.common.response.ApiResponse;
 import io.deccan.controlplane.kafkatrigger.dto.response.WorkflowKafkaTriggerResponse;
 import io.deccan.controlplane.kafkatrigger.entity.WorkflowKafkaTrigger;
 import io.deccan.controlplane.kafkatrigger.mapper.WorkflowKafkaTriggerMapper;
+import io.deccan.controlplane.kafkatrigger.registry.KafkaTriggerRegistry;
 import io.deccan.controlplane.kafkatrigger.service.WorkflowKafkaTriggerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,12 +15,13 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/workflows/{workflowId}/kafka-triggers")
+@RequestMapping("/workflows/{workflowId}/kafka-triggers")
 public class WorkflowKafkaTriggerController {
 
     private final WorkflowKafkaTriggerService service;
 
     private final WorkflowKafkaTriggerMapper mapper;
+    private final KafkaTriggerRegistry registry;
 
     @PostMapping
     @PreAuthorize("hasAuthority('workflow.update')")
@@ -32,9 +34,11 @@ public class WorkflowKafkaTriggerController {
             Map<String, String> request) {
 
         WorkflowKafkaTrigger trigger =
-                service.registerTrigger(
-                        workflowId,
-                        request.get("topic"));
+        service.registerTrigger(
+                workflowId,
+                request.get("topic"));
+
+        registry.register(trigger);
 
         return ApiResponse.<WorkflowKafkaTriggerResponse>builder()
                 .status(201)
@@ -53,8 +57,10 @@ public class WorkflowKafkaTriggerController {
             @PathVariable
             UUID triggerId){
 
-        service.disableTrigger(
-                triggerId);
+        WorkflowKafkaTrigger trigger =
+        service.disableTrigger(triggerId);
+
+        registry.unregister(trigger.getTopic());
 
         return ApiResponse.<Void>builder()
                 .status(200)
@@ -72,8 +78,10 @@ public class WorkflowKafkaTriggerController {
             @PathVariable
             UUID triggerId){
 
-        service.deleteTrigger(
-                triggerId);
+        WorkflowKafkaTrigger trigger =
+        service.deleteTrigger(triggerId);
+
+        registry.unregister(trigger.getTopic());
 
         return ApiResponse.<Void>builder()
                 .status(200)

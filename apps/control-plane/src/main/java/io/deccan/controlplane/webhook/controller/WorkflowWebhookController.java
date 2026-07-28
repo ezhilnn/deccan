@@ -21,7 +21,7 @@ public class WorkflowWebhookController {
 
     private final WorkflowWebhookMapper mapper;
 
-    @PostMapping("/api/workflows/{workflowId}/webhooks")
+    @PostMapping("/workflows/{workflowId}/webhooks")
     @PreAuthorize("hasAuthority('workflow.update')")
     public ApiResponse<WorkflowWebhookResponse> register(
 
@@ -41,7 +41,7 @@ public class WorkflowWebhookController {
 
     }
 
-    @PostMapping("/api/webhooks/{token}")
+    @PostMapping("/webhooks/{token}")
     public ApiResponse<WorkflowExecution> execute(
 
             @PathVariable

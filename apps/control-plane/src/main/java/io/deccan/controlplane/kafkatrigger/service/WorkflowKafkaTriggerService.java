@@ -15,10 +15,10 @@ public interface WorkflowKafkaTriggerService {
     WorkflowExecution executeTrigger(
             String topic,
             JsonNode payload);
-    void disableTrigger(
+    WorkflowKafkaTrigger disableTrigger(
         UUID triggerId);
 
-    void deleteTrigger(
-            UUID triggerId);
+    WorkflowKafkaTrigger deleteTrigger(
+        UUID triggerId);
 
 }

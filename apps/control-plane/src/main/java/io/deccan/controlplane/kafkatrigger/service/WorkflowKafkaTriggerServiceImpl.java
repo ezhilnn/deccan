@@ -25,7 +25,6 @@ public class WorkflowKafkaTriggerServiceImpl
     private final WorkflowKafkaTriggerRepository triggerRepository;
 
     private final ExecutionService executionService;
-    private final KafkaTriggerRegistry registry;
 
     @Override
     public WorkflowKafkaTrigger registerTrigger(
@@ -48,7 +47,6 @@ public class WorkflowKafkaTriggerServiceImpl
         trigger.setEnabled(true);
 
         trigger =  triggerRepository.save(trigger);
-        registry.register(trigger);
 
         return trigger;
 
@@ -78,7 +76,7 @@ public class WorkflowKafkaTriggerServiceImpl
 
     }
     @Override
-    public void disableTrigger(
+    public WorkflowKafkaTrigger disableTrigger(
             UUID triggerId) {
 
         WorkflowKafkaTrigger trigger =
@@ -90,13 +88,12 @@ public class WorkflowKafkaTriggerServiceImpl
         trigger.setEnabled(false);
 
         triggerRepository.save(trigger);
+        return trigger;
 
-        registry.unregister(
-                trigger.getTopic());
 
     }
     @Override
-    public void deleteTrigger(
+    public WorkflowKafkaTrigger  deleteTrigger(
             UUID triggerId) {
 
         WorkflowKafkaTrigger trigger =
@@ -105,10 +102,9 @@ public class WorkflowKafkaTriggerServiceImpl
                                 new IllegalArgumentException(
                                         "Kafka trigger not found"));
 
-        registry.unregister(
-                trigger.getTopic());
 
         triggerRepository.delete(trigger);
+        return trigger;
 
     }
 

@@ -78,12 +78,18 @@ public class GlobalExceptionHandler {
                 Exception ex,
                 HttpServletRequest request) {
 
+         log.error(
+                "Unhandled exception while processing {} {}",
+                request.getMethod(),
+                request.getRequestURI(),
+                ex);
+
         return ResponseEntity.internalServerError()
                 .body(
                         ErrorResponse.builder()
                                 .status(500)
                                 .error("INTERNAL_SERVER_ERROR")
-                                .message(ex.getMessage())
+                                .message(ex.getClass().getSimpleName() + ": " + ex.getMessage())
                                 .path(request.getRequestURI())
                                 .build()
                 );
