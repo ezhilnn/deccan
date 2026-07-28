@@ -44,5 +44,7 @@ public interface ExecutionTaskRepository
     long countByExecutionIdAndStatusNot(
         UUID executionId,
         TaskStatus status);
+    List<ExecutionTask> findByExecutionId(
+        UUID executionId);
 
 }

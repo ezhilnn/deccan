@@ -30,4 +30,6 @@ public interface ExecutionTaskService {
     void reportFailure(
             UUID taskId,
             String errorMessage);
+    List<ExecutionTask> getTasks(
+        UUID executionId);
 }

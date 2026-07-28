@@ -188,5 +188,14 @@ public class ExecutionTaskServiceImpl
                 ExecutionStatus.FAILED);
 
     }
+    @Override
+    @Transactional(readOnly = true)
+    public List<ExecutionTask> getTasks(
+            UUID executionId){
+
+        return taskRepository.findByExecutionId(
+                executionId);
+
+    }
 
 }
