@@ -18,6 +18,7 @@ import io.deccan.controlplane.execution.repository.WorkflowExecutionRepository;
 import io.deccan.controlplane.execution.retry.RetryPolicy;
 import io.deccan.controlplane.execution.retry.RetryPolicyService;
 import io.deccan.controlplane.execution.state.ExecutionStateMachine;
+import io.deccan.controlplane.task.service.ExecutionTaskService;
 import io.deccan.controlplane.workflow.entity.Workflow;
 import io.deccan.controlplane.workflow.entity.WorkflowVersion;
 import io.deccan.controlplane.workflow.repository.WorkflowRepository;
@@ -38,8 +39,8 @@ public class ExecutionServiceImpl
     private final WorkflowVersionRepository workflowVersionRepository;
     private final ExecutionEventPublisher executionEventPublisher;
 
-    private final WorkflowExecutor workflowExecutor;
     private final RetryPolicyService retryPolicyService;
+    private final ExecutionTaskService executionTaskService;
     @Override
     public WorkflowExecution executeWorkflow(
             UUID workflowId,
@@ -114,34 +115,31 @@ public class ExecutionServiceImpl
 
         try{
 
-            workflowExecutor.execute(
+            executionTaskService.createTasks(
                 execution,
                 version);
 
-            executionStateMachine.complete(
-                    execution);
-         execution =
-                executionRepository.save(
-                        execution);
-            executionEventPublisher.publish(
+                execution = executionRepository.save(
+        execution);
+        executionEventPublisher.publish(
 
-                    ExecutionEvent.builder()
+                ExecutionEvent.builder()
 
-                            .executionId(
-                                    execution.getId())
+                        .executionId(
+                                execution.getId())
 
-                            .workflowId(
-                                    workflow.getId())
+                        .workflowId(
+                                workflow.getId())
 
-                            .type(
-                                    "EXECUTION_COMPLETED")
+                        .type(
+                                "TASKS_CREATED")
 
-                            .timestamp(
-                                    OffsetDateTime.now())
+                        .timestamp(
+                                OffsetDateTime.now())
 
-                            .build()
+                        .build()
 
-            );
+        );
 
         }
         catch(Exception ex){
