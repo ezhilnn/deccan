@@ -40,5 +40,9 @@ public interface ExecutionTaskRepository
     );
     List<ExecutionTask> findByExecutionIdOrderByCreatedAt(
         UUID executionId);
+    
+    long countByExecutionIdAndStatusNot(
+        UUID executionId,
+        TaskStatus status);
 
 }

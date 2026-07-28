@@ -24,4 +24,10 @@ public interface ExecutionTaskService {
             UUID taskId,
             String reason);
 
+    void reportSuccess(
+        UUID taskId);
+
+    void reportFailure(
+            UUID taskId,
+            String errorMessage);
 }

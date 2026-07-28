@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
+import io.deccan.controlplane.execution.enums.ExecutionStatus;
 import java.util.UUID;
 
 @Service
@@ -128,6 +129,63 @@ public class ExecutionTaskServiceImpl
         task.setLeaseUntil(null);
 
         taskRepository.save(task);
+
+    }
+    @Override
+    public void reportSuccess(
+            UUID taskId){
+
+        ExecutionTask task =
+                taskRepository.findById(taskId)
+                        .orElseThrow();
+
+        task.setStatus(
+                TaskStatus.COMPLETED);
+
+        task.setLeaseUntil(
+                null);
+
+        taskRepository.save(task);
+
+        if(taskRepository.countByExecutionIdAndStatusNot(
+
+                task.getExecution().getId(),
+
+                TaskStatus.COMPLETED
+
+        ) == 0){
+
+            WorkflowExecution execution =
+                    task.getExecution();
+
+            execution.setStatus(
+                    ExecutionStatus.COMPLETED);
+
+        }
+
+    }
+    @Override
+    public void reportFailure(
+            UUID taskId,
+            String errorMessage){
+
+        ExecutionTask task =
+                taskRepository.findById(taskId)
+                        .orElseThrow();
+
+        task.setStatus(
+                TaskStatus.FAILED);
+
+        task.setLeaseUntil(
+                null);
+
+        taskRepository.save(task);
+
+        WorkflowExecution execution =
+                task.getExecution();
+
+        execution.setStatus(
+                ExecutionStatus.FAILED);
 
     }
 
