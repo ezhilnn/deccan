@@ -12,10 +12,26 @@ spring:
     driver-class-name: org.postgresql.Driver
 
 management:
+
   endpoints:
+
     web:
+
       exposure:
-        include: health,info,prometheus
+
+        include: health,info,prometheus,metrics
+
+  endpoint:
+
+    health:
+
+      show-details: always
+
+  metrics:
+
+    tags:
+
+      application: deccan-worker
 
 deccan:
   control-plane:

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.deccan.worker.retry.RetryPolicy;
 import io.deccan.worker.execution.TaskExecutor;
+import io.deccan.worker.metrics.WorkerMetricsService;
 
 @Slf4j
 @Service
@@ -32,10 +33,16 @@ public class TaskExecutionServiceImpl
         retryExecutor;
     private final TaskExecutor
         taskExecutor;
+    private final WorkerMetricsService
+        metricsService;
 
     @Override
     public void execute(
             ExecutionTaskResponse task) {
+        long startTime =
+        System.currentTimeMillis();
+
+        metricsService.taskStarted();
         
         contextHolder.clear();
 
@@ -78,13 +85,17 @@ public class TaskExecutionServiceImpl
                         }));
 
             if(retryResult.isSuccess()){
+                metricsService.taskSucceeded();
+
+                metricsService.connectorExecuted(
+                        task.getNodeType());
 
                 taskResultService.reportSuccess(
                         task.getId());
 
             }
             else{
-
+                metricsService.taskFailed();
                 taskResultService.reportFailure(
                         task.getId());
 
@@ -92,6 +103,7 @@ public class TaskExecutionServiceImpl
 
         }
         catch (Exception ex){
+            metricsService.taskTimedOut();
 
             taskResultService.reportFailure(
                     task.getId());
@@ -102,6 +114,9 @@ public class TaskExecutionServiceImpl
 
         }
         finally{
+            metricsService.executionFinished(
+            System.currentTimeMillis()
+                    - startTime);
             contextHolder.clear();
         }
 
