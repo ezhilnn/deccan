@@ -8,7 +8,10 @@ import io.deccan.controlplane.workflow.entity.WorkflowVersion;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -18,7 +21,7 @@ public class WorkflowGraphServiceImpl
     private final ObjectMapper objectMapper;
 
     @Override
-    public WorkflowGraph buildGraph(
+    public ExecutionWorkflowGraph buildGraph(
             WorkflowVersion version) {
 
         try {
@@ -31,10 +34,10 @@ public class WorkflowGraphServiceImpl
             Map<String, WorkflowNode> nodes =
                     new HashMap<>();
 
-            Map<String, List<WorkflowEdge>> outgoing =
+            Map<String, List<WorkflowEdge>> incoming =
                     new HashMap<>();
 
-            Map<String, List<WorkflowEdge>> incoming =
+            Map<String, List<WorkflowEdge>> outgoing =
                     new HashMap<>();
 
             for (WorkflowNode node : definition.getNodes()) {
@@ -43,11 +46,11 @@ public class WorkflowGraphServiceImpl
                         node.getId(),
                         node);
 
-                outgoing.put(
+                incoming.put(
                         node.getId(),
                         new ArrayList<>());
 
-                incoming.put(
+                outgoing.put(
                         node.getId(),
                         new ArrayList<>());
 
@@ -55,20 +58,18 @@ public class WorkflowGraphServiceImpl
 
             for (WorkflowEdge edge : definition.getEdges()) {
 
-                outgoing
-                        .get(edge.getSource())
+                outgoing.get(edge.getSource())
                         .add(edge);
 
-                incoming
-                        .get(edge.getTarget())
+                incoming.get(edge.getTarget())
                         .add(edge);
 
             }
 
-            return WorkflowGraph.builder()
+            return ExecutionWorkflowGraph.builder()
                     .nodes(nodes)
-                    .outgoingEdges(outgoing)
                     .incomingEdges(incoming)
+                    .outgoingEdges(outgoing)
                     .build();
 
         } catch (Exception ex) {

@@ -12,10 +12,10 @@ import java.util.Map;
 @Builder
 public class ExecutionWorkflowGraph {
 
-    private Map<String, WorkflowNode> nodes;
+    private final Map<String, WorkflowNode> nodes;
 
-    private Map<String, List<WorkflowEdge>> outgoingEdges;
+    private final Map<String, List<WorkflowEdge>> incomingEdges;
 
-    private Map<String, List<WorkflowEdge>> incomingEdges;
+    private final Map<String, List<WorkflowEdge>> outgoingEdges;
 
 }

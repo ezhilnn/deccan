@@ -4,7 +4,7 @@ import io.deccan.controlplane.workflow.entity.WorkflowVersion;
 
 public interface WorkflowGraphService {
 
-    WorkflowGraph buildGraph(
+    ExecutionWorkflowGraph buildGraph(
             WorkflowVersion version);
 
 }
