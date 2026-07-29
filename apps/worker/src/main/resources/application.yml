@@ -40,3 +40,5 @@ worker:
 
   polling:
     interval: 5000
+  execution:
+    timeout: 300000

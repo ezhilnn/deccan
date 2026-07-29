@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.deccan.worker.retry.RetryPolicy;
+import io.deccan.worker.execution.TaskExecutor;
 
 @Slf4j
 @Service
@@ -29,6 +30,8 @@ public class TaskExecutionServiceImpl
             objectMapper;
     private final RetryExecutor
         retryExecutor;
+    private final TaskExecutor
+        taskExecutor;
 
     @Override
     public void execute(
@@ -58,21 +61,21 @@ public class TaskExecutionServiceImpl
                     .build();
 
             RetryResult retryResult =
-                    retryExecutor.execute(
-                            retryPolicy,
-                            () -> {
+                retryExecutor.execute(
+                        retryPolicy,
+                        () -> taskExecutor.execute(() -> {
 
-                                ConnectorResult result =
-                                        connectorExecutor.execute(task);
+                            ConnectorResult result =
+                                    connectorExecutor.execute(task);
 
-                                if(!result.isSuccess()){
+                            if (!result.isSuccess()) {
 
-                                    throw new RuntimeException(
-                                            result.getErrorMessage());
+                                throw new RuntimeException(
+                                        result.getErrorMessage());
 
-                                }
+                            }
 
-                            });
+                        }));
 
             if(retryResult.isSuccess()){
 
