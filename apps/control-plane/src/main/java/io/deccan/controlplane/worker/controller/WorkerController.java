@@ -17,7 +17,7 @@ import java.time.Instant;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/workers")
+@RequestMapping("/workers")
 public class WorkerController {
 
     private final WorkerService service;

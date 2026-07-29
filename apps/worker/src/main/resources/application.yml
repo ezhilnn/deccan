@@ -17,7 +17,9 @@ deccan:
 
 worker:
   name: worker-01
+
   host: localhost
+
   port: 8187
 
   capabilities:

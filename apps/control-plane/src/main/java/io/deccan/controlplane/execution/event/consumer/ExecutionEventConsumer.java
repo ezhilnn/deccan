@@ -12,7 +12,8 @@ public class ExecutionEventConsumer {
 
     @KafkaListener(
         topics = EventTopics.EXECUTION_EVENTS,
-                groupId = "deccan-control-plane")
+                groupId = "deccan-control-plane",
+                containerFactory = "executionEventKafkaListenerContainerFactory")
         public void consume(
                 ExecutionEvent event) {
 

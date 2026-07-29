@@ -12,6 +12,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -19,11 +20,20 @@ import java.time.Instant;
 @Table(name = "execution_tasks")
 public class ExecutionTask extends BaseEntity {
 
+
+    @Column(name = "execution_id", nullable = false, insertable = false, updatable = false)
+
+    private UUID executionId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             name = "execution_id",
             nullable = false)
     private WorkflowExecution execution;
+
+    @Column(name = "worker_id", insertable = false, updatable = false)
+
+    private UUID workerId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "worker_id")

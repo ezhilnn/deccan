@@ -16,6 +16,8 @@ import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 
+import io.deccan.controlplane.execution.event.model.ExecutionEvent;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -140,6 +142,53 @@ public class KafkaConfiguration {
 
         return factory;
 
+
+        }
+
+        @Bean
+                public ConcurrentKafkaListenerContainerFactory<String, ExecutionEvent>
+                executionEventKafkaListenerContainerFactory() {
+
+                ConcurrentKafkaListenerContainerFactory<String, ExecutionEvent> factory =
+                        new ConcurrentKafkaListenerContainerFactory<>();
+
+                factory.setConsumerFactory(
+                        executionEventConsumerFactory());
+
+                return factory;
+                }
+        @Bean
+        public ConsumerFactory<String, ExecutionEvent> executionEventConsumerFactory() {
+
+        Map<String,Object> config = new HashMap<>();
+
+        config.put(
+                ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                "kafka:9092");
+
+        config.put(
+                ConsumerConfig.GROUP_ID_CONFIG,
+                "deccan-control-plane");
+
+        config.put(
+                ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
+                StringDeserializer.class);
+
+        config.put(
+                ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+                JsonDeserializer.class);
+
+        config.put(
+                JsonDeserializer.TRUSTED_PACKAGES,
+                "*");
+        config.put(
+                JsonDeserializer.USE_TYPE_INFO_HEADERS,
+                false);
+
+        return new DefaultKafkaConsumerFactory<>(
+                config,
+                new StringDeserializer(),
+                new JsonDeserializer<>(ExecutionEvent.class, false));
         }
 
 }

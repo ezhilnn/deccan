@@ -8,16 +8,19 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import io.deccan.controlplane.task.dto.response.ExecutionTaskResponse;
+import io.deccan.controlplane.task.mapper.ExecutionTaskMapper;
 
 import java.util.UUID;
 import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/tasks")
+@RequestMapping("/tasks")
 public class ExecutionTaskController {
 
     private final ExecutionTaskService service;
+    private final ExecutionTaskMapper mapper;
 
     @PostMapping("/{taskId}/result")
     @PreAuthorize("hasAuthority('workflow.execute')")
@@ -56,23 +59,38 @@ public class ExecutionTaskController {
     }
     @GetMapping("/executions/{executionId}")
     @PreAuthorize("hasAuthority('workflow.read')")
-    public ApiResponse<List<ExecutionTask>> getTasks(
+    public ApiResponse<List<ExecutionTaskResponse>> getTasks(
 
             @PathVariable
             UUID executionId){
 
-        return ApiResponse.<List<ExecutionTask>>builder()
+        List<ExecutionTaskResponse> response =
+        service.getTasks(executionId)
+               .stream()
+               .map(mapper::toResponse)
+               .toList();
+
+                return ApiResponse.<List<ExecutionTaskResponse>>builder()
+                        .status(200)
+                        .message("Execution tasks fetched")
+                        .data(response)
+                        .build();
+
+    }
+    @PostMapping("/lease")
+    public ApiResponse<ExecutionTaskResponse> leaseTask(){
+
+        ExecutionTask task =
+                service.leaseNextTask();
+
+        return ApiResponse.<ExecutionTaskResponse>builder()
 
                 .status(200)
 
-                .message("Execution tasks fetched")
+                .message("Task leased successfully")
 
                 .data(
-
-                        service.getTasks(
-                                executionId)
-
-                )
+                        mapper.toResponse(task))
 
                 .build();
 
