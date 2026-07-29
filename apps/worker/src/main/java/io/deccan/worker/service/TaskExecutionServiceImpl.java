@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.deccan.worker.retry.RetryPolicy;
 import io.deccan.worker.execution.TaskExecutor;
+import io.deccan.worker.logging.WorkerMdcFilter;
 import io.deccan.worker.metrics.WorkerMetricsService;
 
 @Slf4j
@@ -35,6 +36,8 @@ public class TaskExecutionServiceImpl
         taskExecutor;
     private final WorkerMetricsService
         metricsService;
+    private final WorkerMdcFilter
+        workerMdcFilter;
 
     @Override
     public void execute(
@@ -43,6 +46,8 @@ public class TaskExecutionServiceImpl
         System.currentTimeMillis();
 
         metricsService.taskStarted();
+        workerMdcFilter.initialize(
+        task);
         
         contextHolder.clear();
 
@@ -117,6 +122,7 @@ public class TaskExecutionServiceImpl
             metricsService.executionFinished(
             System.currentTimeMillis()
                     - startTime);
+            workerMdcFilter.clear();
             contextHolder.clear();
         }
 
