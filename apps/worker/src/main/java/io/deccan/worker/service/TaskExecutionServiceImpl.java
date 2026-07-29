@@ -2,10 +2,13 @@ package io.deccan.worker.service;
 
 import io.deccan.worker.connector.ConnectorExecutor;
 import io.deccan.worker.connector.ConnectorResult;
+import io.deccan.worker.context.ExecutionContextHolder;
 import io.deccan.worker.dto.response.ExecutionTaskResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Slf4j
 @Service
@@ -16,10 +19,23 @@ public class TaskExecutionServiceImpl
     private final ConnectorExecutor connectorExecutor;
 
     private final TaskResultService taskResultService;
+    private final ExecutionContextHolder
+        contextHolder;
+
+    private final ObjectMapper
+            objectMapper;
 
     @Override
     public void execute(
             ExecutionTaskResponse task) {
+        
+        contextHolder.clear();
+
+        contextHolder
+                .get()
+                .put(
+                        "task",
+                        objectMapper.valueToTree(task));
 
         log.info("----------------------------------------");
         log.info("Executing Task");
@@ -38,6 +54,11 @@ public class TaskExecutionServiceImpl
 
                 log.info(
                         "Task completed successfully.");
+                contextHolder
+                    .get()
+                    .put(
+                            task.getNodeId(),
+                            result.getOutput());
 
             }
             else{
@@ -61,6 +82,9 @@ public class TaskExecutionServiceImpl
                     "Task execution failed.",
                     ex);
 
+        }
+        finally{
+            contextHolder.clear();
         }
 
         log.info("----------------------------------------");

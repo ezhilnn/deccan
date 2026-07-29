@@ -4,6 +4,12 @@ server:
 spring:
   application:
     name: deccan-worker
+  datasource:
+
+    url: jdbc:postgresql://postgres:5432/deccan
+    username: deccan
+    password: deccan
+    driver-class-name: org.postgresql.Driver
 
 management:
   endpoints:
