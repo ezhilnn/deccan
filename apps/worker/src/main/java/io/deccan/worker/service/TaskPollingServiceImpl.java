@@ -18,6 +18,7 @@ public class TaskPollingServiceImpl
     private final RestClient restClient;
 
     private final WorkerState workerState;
+    private final TaskExecutionService taskExecutionService;
 
     @Override
     public void poll() {
@@ -42,17 +43,14 @@ public class TaskPollingServiceImpl
             ExecutionTaskResponse task =
                     response.getData();
 
-            log.info("------------------------------------");
-            log.info("Task leased");
-            log.info("Task Id      : {}", task.getId());
-            log.info("Execution Id : {}", task.getExecutionId());
-            log.info("Node Id      : {}", task.getNodeId());
-            log.info("Node Type    : {}", task.getNodeType());
-            log.info("------------------------------------");
+            taskExecutionService.execute(task);
 
         }
-        catch (Exception ignored) {
-
+        catch (Exception ex) {
+                
+            log.error(
+                    "Failed while polling for tasks.",
+                    ex);
         }
 
     }
