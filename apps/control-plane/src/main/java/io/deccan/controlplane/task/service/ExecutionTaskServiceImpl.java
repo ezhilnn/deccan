@@ -21,6 +21,7 @@ import java.time.Instant;
 import java.util.List;
 import io.deccan.controlplane.execution.enums.ExecutionStatus;
 import io.deccan.controlplane.execution.repository.WorkflowExecutionRepository;
+import io.deccan.controlplane.scheduler.service.WorkflowSchedulerService;
 
 import java.util.UUID;
 
@@ -41,6 +42,7 @@ public class ExecutionTaskServiceImpl
     private final ObjectMapper objectMapper;
 
     private final WorkflowExecutionRepository executionRepository;
+    private final WorkflowSchedulerService workflowSchedulerService;
 
     @Override
     public List<ExecutionTask> createTasks(
@@ -162,6 +164,8 @@ public class ExecutionTaskServiceImpl
 
 
         taskRepository.save(task);
+        workflowSchedulerService.scheduleNextTasks(
+        task);
 
         if(taskRepository.countByExecutionIdAndStatusNot(
 
