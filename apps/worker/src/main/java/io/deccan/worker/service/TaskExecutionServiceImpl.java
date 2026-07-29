@@ -4,11 +4,14 @@ import io.deccan.worker.connector.ConnectorExecutor;
 import io.deccan.worker.connector.ConnectorResult;
 import io.deccan.worker.context.ExecutionContextHolder;
 import io.deccan.worker.dto.response.ExecutionTaskResponse;
+import io.deccan.worker.retry.RetryExecutor;
+import io.deccan.worker.retry.RetryResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.deccan.worker.retry.RetryPolicy;
 
 @Slf4j
 @Service
@@ -24,6 +27,8 @@ public class TaskExecutionServiceImpl
 
     private final ObjectMapper
             objectMapper;
+    private final RetryExecutor
+        retryExecutor;
 
     @Override
     public void execute(
@@ -44,31 +49,41 @@ public class TaskExecutionServiceImpl
 
         try {
 
-            ConnectorResult result =
-                    connectorExecutor.execute(task);
+            RetryPolicy retryPolicy =
+            RetryPolicy.builder()
+                    .maxAttempts(3)
+                    .initialDelay(1000)
+                    .multiplier(2.0)
+                    .maxDelay(10000)
+                    .build();
 
-            if(result.isSuccess()){
+            RetryResult retryResult =
+                    retryExecutor.execute(
+                            retryPolicy,
+                            () -> {
+
+                                ConnectorResult result =
+                                        connectorExecutor.execute(task);
+
+                                if(!result.isSuccess()){
+
+                                    throw new RuntimeException(
+                                            result.getErrorMessage());
+
+                                }
+
+                            });
+
+            if(retryResult.isSuccess()){
 
                 taskResultService.reportSuccess(
                         task.getId());
-
-                log.info(
-                        "Task completed successfully.");
-                contextHolder
-                    .get()
-                    .put(
-                            task.getNodeId(),
-                            result.getOutput());
 
             }
             else{
 
                 taskResultService.reportFailure(
                         task.getId());
-
-                log.error(
-                        "Connector failed : {}",
-                        result.getErrorMessage());
 
             }
 
