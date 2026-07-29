@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.deccan.worker.connector.Connector;
 import io.deccan.worker.connector.ConnectorResult;
+import io.deccan.worker.context.ConfigurationResolver;
 import io.deccan.worker.dto.response.ExecutionTaskResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,9 @@ public class HttpConnector
 
     private final ObjectMapper objectMapper;
 
+    private final ConfigurationResolver
+        configurationResolver;
+
     @Override
     public String type() {
 
@@ -35,9 +39,13 @@ public class HttpConnector
 
         try {
 
+            JsonNode resolvedConfiguration =
+                configurationResolver.resolve(
+                    task.getConfiguration().deepCopy());
+
             HttpRequestConfig config =
                     objectMapper.treeToValue(
-                            task.getConfiguration(),
+                            resolvedConfiguration,
                             HttpRequestConfig.class);
 
             ResponseEntity<String> response =
