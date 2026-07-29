@@ -11,31 +11,17 @@ public class ExecutionTaskMapper {
             ExecutionTask task){
 
         return ExecutionTaskResponse.builder()
-
                 .id(task.getId())
-
                 .executionId(task.getExecutionId())
-
                 .workerId(task.getWorkerId())
-
-                .nodeId(
-                        task.getNodeId())
-
-                .nodeType(
-                        task.getNodeType())
-
-                .status(
-                        task.getStatus())
-
-                .leaseUntil(
-                        task.getLeaseUntil())
-
-                .startedAt(
-                        task.getStartedAt())
-
-                .completedAt(
-                        task.getCompletedAt())
-
+                .nodeId(task.getNodeId())
+                .nodeType(task.getNodeType())
+                .configuration(task.getConfiguration())
+                .retryCount(task.getRetryCount())
+                .status(task.getStatus())
+                .leaseUntil(task.getLeaseUntil())
+                .startedAt(task.getStartedAt())
+                .completedAt(task.getCompletedAt())
                 .build();
 
     }

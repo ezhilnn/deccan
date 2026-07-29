@@ -84,7 +84,7 @@ public class ExecutionTaskServiceImpl
         ExecutionTask task =
                 taskRepository
                         .leaseNextTask(
-                                TaskStatus.PENDING,
+                                TaskStatus.READY,
                                 PageRequest.of(0, 1))
                         .stream()
                         .findFirst()
@@ -95,7 +95,7 @@ public class ExecutionTaskServiceImpl
         task.setWorker(worker);
 
         task.setStatus(TaskStatus.LEASED);
-        task.setStartedAt(
+       task.setLeasedAt(
         Instant.now());
 
         task.setLeaseUntil(

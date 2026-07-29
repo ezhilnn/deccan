@@ -24,6 +24,7 @@ import io.deccan.controlplane.workflow.entity.WorkflowVersion;
 import io.deccan.controlplane.workflow.repository.WorkflowRepository;
 import io.deccan.controlplane.workflow.repository.WorkflowVersionRepository;
 import lombok.RequiredArgsConstructor;
+import io.deccan.controlplane.scheduler.service.WorkflowSchedulerService;
 
 @Service
 @RequiredArgsConstructor
@@ -41,6 +42,7 @@ public class ExecutionServiceImpl
 
     private final RetryPolicyService retryPolicyService;
     private final ExecutionTaskService executionTaskService;
+    private final WorkflowSchedulerService workflowSchedulerService;
     @Override
     public WorkflowExecution executeWorkflow(
             UUID workflowId,
@@ -116,6 +118,9 @@ public class ExecutionServiceImpl
         try{
 
             executionTaskService.createTasks(
+                execution,
+                version);
+        workflowSchedulerService.initializeWorkflow(
                 execution,
                 version);
 

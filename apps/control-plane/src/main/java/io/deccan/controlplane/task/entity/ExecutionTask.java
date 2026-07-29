@@ -47,6 +47,9 @@ public class ExecutionTask extends BaseEntity {
     private TaskStatus status;
 
     private Instant leaseUntil;
+
+    @Column(name = "leased_at")
+    private Instant leasedAt;
     
     @Column(nullable = false)
     private String nodeType;

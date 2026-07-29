@@ -1,8 +1,10 @@
 package io.deccan.controlplane.task.enums;
 
 public enum TaskStatus {
-
+    
     PENDING,
+
+    READY,
 
     LEASED,
 
@@ -10,6 +12,8 @@ public enum TaskStatus {
 
     COMPLETED,
 
-    FAILED
+    FAILED,
+
+    CANCELLED
 
 }

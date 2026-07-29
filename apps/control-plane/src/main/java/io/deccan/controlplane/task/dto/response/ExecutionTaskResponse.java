@@ -7,6 +7,8 @@ import lombok.Getter;
 import java.time.Instant;
 import java.util.UUID;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 @Getter
 @Builder
 public class ExecutionTaskResponse {
@@ -28,5 +30,7 @@ public class ExecutionTaskResponse {
     private Instant startedAt;
 
     private Instant completedAt;
+    private JsonNode configuration;
+    private Integer retryCount;
 
 }

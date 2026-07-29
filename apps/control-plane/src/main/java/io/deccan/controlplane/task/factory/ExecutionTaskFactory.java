@@ -45,8 +45,6 @@ public class ExecutionTaskFactory {
             task.setRetryCount(
                     0);
 
-            task.setStatus(
-                    TaskStatus.PENDING);
 
             tasks.add(task);
 

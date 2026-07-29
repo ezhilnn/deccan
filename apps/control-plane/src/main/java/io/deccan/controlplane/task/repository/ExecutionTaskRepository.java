@@ -26,12 +26,16 @@ public interface ExecutionTaskRepository
     //         Instant now);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("""
-            SELECT t
-            FROM ExecutionTask t
-            WHERE t.status = :status
-            ORDER BY t.createdAt
-            """)
+   @Query("""
+        SELECT t
+        FROM ExecutionTask t
+        WHERE t.status=:status
+        AND (
+                t.leaseUntil IS NULL
+                OR t.leaseUntil < CURRENT_TIMESTAMP
+        )
+        ORDER BY t.createdAt
+        """)
     List<ExecutionTask> leaseNextTask(
 
             @Param("status")
@@ -58,5 +62,9 @@ public interface ExecutionTaskRepository
     long countByWorkerIdAndStatus(
         UUID workerId,
         TaskStatus status);
+    Optional<ExecutionTask> findByExecutionIdAndNodeId(
+        UUID executionId,
+        String nodeId);
+
 
 }
