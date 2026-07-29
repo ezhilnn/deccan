@@ -12,6 +12,10 @@ import io.deccan.controlplane.workflow.entity.WorkflowVersion;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import io.deccan.controlplane.execution.graph.ExecutionWorkflowGraph;
+import io.deccan.controlplane.execution.graph.WorkflowGraphService;
+import io.deccan.controlplane.workflow.definition.edge.WorkflowEdge;
+import io.deccan.controlplane.workflow.definition.node.WorkflowNode;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -22,7 +26,7 @@ import java.util.Set;
 public class WorkflowSchedulerServiceImpl
         implements WorkflowSchedulerService {
 
-    private final ObjectMapper objectMapper;
+    private final WorkflowGraphService workflowGraphService;
 
     private final ExecutionTaskRepository
             taskRepository;
@@ -34,22 +38,25 @@ public class WorkflowSchedulerServiceImpl
 
         try {
 
-            WorkflowDefinition definition =
-                    objectMapper.treeToValue(
-                            version.getDefinition(),
-                            WorkflowDefinition.class);
+            ExecutionWorkflowGraph graph =
+            workflowGraphService.buildGraph(
+                    version);
 
             Set<String> targetNodes =
                     new HashSet<>();
 
-            for (WorkflowEdge edge : definition.getEdges()) {
+           for (var edges : graph.getIncomingEdges().values()) {
+
+            for (WorkflowEdge edge : edges) {
 
                 targetNodes.add(
                         edge.getTarget());
 
             }
 
-            for (WorkflowNode node : definition.getNodes()) {
+        }
+
+            for (WorkflowNode node :  graph.getNodes().values()) {
 
                 if (targetNodes.contains(node.getId())) {
                     continue;
