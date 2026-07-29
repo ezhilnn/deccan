@@ -1,0 +1,34 @@
+server:
+  port: 8187
+
+spring:
+  application:
+    name: deccan-worker
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+
+deccan:
+  control-plane:
+    base-url: http://localhost:8088/api
+
+worker:
+  name: worker-01
+  host: localhost
+  port: 8187
+
+  capabilities:
+    - http
+    - database
+    - kafka
+    - email
+    - ai
+
+  heartbeat:
+    interval: 30000
+
+  polling:
+    interval: 5000
