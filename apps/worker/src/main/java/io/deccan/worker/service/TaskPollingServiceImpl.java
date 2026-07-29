@@ -2,6 +2,7 @@ package io.deccan.worker.service;
 
 import io.deccan.worker.dto.response.ApiResponse;
 import io.deccan.worker.dto.response.ExecutionTaskResponse;
+import io.deccan.worker.pipeline.ExecutionPipeline;
 import io.deccan.worker.registration.WorkerState;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +19,8 @@ public class TaskPollingServiceImpl
     private final RestClient restClient;
 
     private final WorkerState workerState;
-    private final TaskExecutionService taskExecutionService;
+    private final ExecutionPipeline
+        executionPipeline;
 
     @Override
     public void poll() {
@@ -43,7 +45,7 @@ public class TaskPollingServiceImpl
             ExecutionTaskResponse task =
                     response.getData();
 
-            taskExecutionService.execute(task);
+            executionPipeline.execute(task);
 
         }
         catch (Exception ex) {
