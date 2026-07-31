@@ -56,25 +56,34 @@ public class HttpNodeExecutor
                                     .build()
 
                     );
+                if(!response.isSuccess()){
 
-            context.getNodeOutputs().put(
+                throw new IllegalStateException(
 
-                    node.getId(),
+                        response.getError()
 
-                    NodeResult.builder()
+                );
 
-                            .success(
-                                    response.isSuccess())
+                }
 
-                            .data(
-                                    response.getBody())
+                context.putNodeOutput(
 
-                            .error(
-                                    response.getError())
+                        node.getId(),
 
-                            .build()
+                        NodeResult.builder()
 
-            );
+                                .success(
+                                        response.isSuccess())
+
+                                .data(
+                                        response.getBody())
+
+                                .error(
+                                        response.getError())
+
+                                .build()
+
+                );
 
     }
 
