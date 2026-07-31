@@ -1,15 +1,16 @@
 package io.deccan.controlplane.worker.service;
 
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import io.deccan.controlplane.worker.entity.Worker;
 import io.deccan.controlplane.worker.enums.WorkerStatus;
 import io.deccan.controlplane.worker.repository.WorkerRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.Instant;
-import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -21,23 +22,32 @@ public class WorkerServiceImpl
 
     @Override
     public Worker register(
-            Worker worker){
+            Worker worker) {
 
-        worker.setStatus(
-                WorkerStatus.ONLINE);
+        Worker existing =
+                repository.findByWorkerName(worker.getWorkerName())
+                        .orElse(null);
 
-        worker.setLastHeartbeat(
-                Instant.now());
+        if (existing != null) {
 
-        return repository.save(
-                worker);
+            existing.setHostName(worker.getHostName());
+            existing.setCapabilities(worker.getCapabilities());
+            existing.setStatus(WorkerStatus.ONLINE);
+            existing.setLastHeartbeat(Instant.now());
 
+            return repository.save(existing);
+        }
+
+        worker.setStatus(WorkerStatus.ONLINE);
+        worker.setLastHeartbeat(Instant.now());
+
+        return repository.save(worker);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Worker get(
-            UUID workerId){
+            UUID workerId) {
 
         return repository.findById(workerId)
                 .orElseThrow(() ->
@@ -48,14 +58,15 @@ public class WorkerServiceImpl
 
     @Override
     @Transactional(readOnly = true)
-    public List<Worker> list(){
+    public List<Worker> list() {
 
         return repository.findAll();
 
     }
+
     @Override
     public Worker heartbeat(
-            UUID workerId){
+            UUID workerId) {
 
         Worker worker =
                 repository.findById(workerId)
@@ -73,9 +84,10 @@ public class WorkerServiceImpl
                 worker);
 
     }
+
     @Override
     @Transactional(readOnly = true)
-    public Worker findAvailableWorker(){
+    public Worker findAvailableWorker() {
 
         return repository
                 .findByStatusOrderByLastHeartbeatDesc(

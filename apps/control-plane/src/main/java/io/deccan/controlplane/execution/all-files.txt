@@ -1,0 +1,2171 @@
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\config\HttpClientConfig.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestClient;
+
+@Configuration
+public class HttpClientConfig {
+
+    @Bean
+    public RestClient restClient() {
+
+        return RestClient.builder()
+                .build();
+
+    }
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\connector\ConnectorRequest.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.connector;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import lombok.Builder;
+import lombok.Getter;
+
+@Getter
+@Builder
+public class ConnectorRequest {
+
+    private String connector;
+
+    private JsonNode configuration;
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\connector\ConnectorResponse.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.connector;
+
+import lombok.Builder;
+import lombok.Getter;
+
+@Getter
+@Builder
+public class ConnectorResponse {
+
+    private boolean success;
+
+    private Object body;
+
+    private String error;
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\connector\ConnectorRuntime.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.connector;
+
+public interface ConnectorRuntime {
+
+    boolean supports(
+            String connector);
+
+    ConnectorResponse execute(
+            ConnectorRequest request);
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\connector\constants\ConnectorNames.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.connector.constants;
+
+public final class ConnectorNames {
+
+    private ConnectorNames() {
+    }
+
+    public static final String HTTP = "http";
+
+    public static final String POSTGRES = "postgres";
+
+    public static final String REDIS = "redis";
+
+    public static final String KAFKA = "kafka";
+
+    public static final String MINIO = "minio";
+
+    public static final String OPENAI = "openai";
+
+    public static final String OLLAMA = "ollama";
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\connector\impl\HttpConnectorRuntime.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.connector.impl;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import io.deccan.controlplane.execution.connector.ConnectorRequest;
+import io.deccan.controlplane.execution.connector.ConnectorResponse;
+import io.deccan.controlplane.execution.connector.ConnectorRuntime;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpMethod;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class HttpConnectorRuntime implements ConnectorRuntime {
+
+    private final RestClient restClient;
+
+    @Override
+    public boolean supports(String connector) {
+        return "http".equalsIgnoreCase(connector);
+    }
+
+    @Override
+    public ConnectorResponse execute(ConnectorRequest request) {
+
+        JsonNode configuration = request.getConfiguration();
+
+        String method = configuration
+                .path("method")
+                .asText("GET")
+                .toUpperCase();
+
+        String url = configuration
+                .path("url")
+                .asText();
+
+        if (url.isBlank()) {
+            throw new IllegalArgumentException("URL is required");
+        }
+
+        HttpMethod httpMethod;
+
+        try {
+            httpMethod = HttpMethod.valueOf(method);
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException(
+                    "Unsupported HTTP method: " + method);
+        }
+
+        Object response = restClient
+                .method(httpMethod)
+                .uri(url)
+                .retrieve()
+                .body(Object.class);
+
+        Map<String, Object> result = new HashMap<>();
+
+        result.put("status", 200);
+        result.put("body", response);
+
+        log.info(
+                "HTTP connector executed {} {}",
+                method,
+                url);
+
+        return ConnectorResponse.builder()
+                .success(true)
+                .body(result)
+                .build();
+    }
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\connector\resolver\ConnectorRuntimeResolver.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.connector.resolver;
+
+import io.deccan.controlplane.execution.connector.ConnectorRuntime;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+
+@Component
+@RequiredArgsConstructor
+public class ConnectorRuntimeResolver {
+
+    private final List<ConnectorRuntime> runtimes;
+
+    public ConnectorRuntime resolve(
+            String connector) {
+
+        return runtimes.stream()
+                .filter(runtime ->
+                        runtime.supports(connector))
+                .findFirst()
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "No connector runtime registered for: "
+                                        + connector));
+
+    }
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\context\ExecutionContext.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.context;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import io.deccan.controlplane.execution.entity.WorkflowExecution;
+import lombok.Builder;
+import lombok.Getter;
+import io.deccan.controlplane.execution.context.model.NodeResult;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@Getter
+@Builder
+public class ExecutionContext {
+
+    private WorkflowExecution execution;
+
+    private JsonNode input;
+
+    @Builder.Default
+    private Map<String,Object> variables =
+            new HashMap<>();
+
+    @Builder.Default
+private Map<String,NodeResult> nodeOutputs =
+        new HashMap<>();
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\context\model\NodeResult.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.context.model;
+
+import lombok.Builder;
+import lombok.Getter;
+
+@Getter
+@Builder
+public class NodeResult {
+
+    private boolean success;
+
+    private Object data;
+
+    private String error;
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\controller\ExecutionController.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.controller;
+
+import io.deccan.controlplane.common.response.ApiResponse;
+import io.deccan.controlplane.execution.dto.request.ExecutionRequest;
+import io.deccan.controlplane.execution.dto.response.ExecutionResponse;
+import io.deccan.controlplane.execution.entity.WorkflowExecution;
+import io.deccan.controlplane.execution.mapper.ExecutionMapper;
+import io.deccan.controlplane.execution.service.ExecutionService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/executions")
+@RequiredArgsConstructor
+public class ExecutionController {
+
+    private final ExecutionService executionService;
+
+    private final ExecutionMapper mapper;
+
+    @PreAuthorize("hasAuthority('workflow.execute')")
+    @PostMapping("/workflows/{workflowId}")
+    public ApiResponse<ExecutionResponse> execute(
+
+            @PathVariable
+            UUID workflowId,
+
+            @Valid
+            @RequestBody
+            ExecutionRequest request){
+
+        ExecutionResponse response =
+                mapper.toResponse(
+
+                        executionService.executeWorkflow(
+
+                                workflowId,
+
+                                request.getInput()
+
+                        )
+
+                );
+
+        return ApiResponse
+                .<ExecutionResponse>builder()
+                .status(201)
+                .message("Workflow execution started")
+                .data(response)
+                .build();
+
+    }
+
+    @PreAuthorize("hasAuthority('workflow.read')")
+    @GetMapping("/{executionId}")
+    public ApiResponse<ExecutionResponse> get(
+
+            @PathVariable
+            UUID executionId){
+
+        return ApiResponse
+                .<ExecutionResponse>builder()
+                .status(200)
+                .message("Execution fetched successfully")
+                .data(
+                        mapper.toResponse(
+                                executionService.getExecution(
+                                        executionId
+                                )
+                        )
+                )
+                .build();
+
+    }
+
+    @PreAuthorize("hasAuthority('workflow.read')")
+    @GetMapping("/workflows/{workflowId}")
+    public ApiResponse<List<ExecutionResponse>> list(
+
+            @PathVariable
+            UUID workflowId){
+
+        List<ExecutionResponse> response =
+                executionService.getExecutions(
+                                workflowId)
+                        .stream()
+                        .map(mapper::toResponse)
+                        .toList();
+
+        return ApiResponse
+                .<List<ExecutionResponse>>builder()
+                .status(200)
+                .message("Executions fetched successfully")
+                .data(response)
+                .build();
+
+
+    }
+    @PreAuthorize("hasAuthority('workflow.execute')")
+        @PostMapping("/{executionId}/cancel")
+        public ApiResponse<Void> cancel(
+
+                @PathVariable
+                UUID executionId){
+
+                executionService.cancelExecution(
+                        executionId);
+
+                return ApiResponse.<Void>builder()
+                        .status(200)
+                        .message("Execution cancelled successfully")
+                        .build();
+
+
+        }
+
+        @PreAuthorize("hasAuthority('workflow.execute')")
+        @PostMapping("/{executionId}/retry")
+        public ApiResponse<ExecutionResponse> retry(
+
+                @PathVariable
+                UUID executionId){
+
+                WorkflowExecution execution =
+                        executionService.retryExecution(
+                                executionId);
+
+                return ApiResponse.<ExecutionResponse>builder()
+                        .status(201)
+                        .message("Execution retried successfully")
+                        .data(
+                                mapper.toResponse(
+                                        execution))
+                        .build();
+
+        }
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\dto\request\ExecutionRequest.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.dto.request;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+public class ExecutionRequest {
+
+    private JsonNode input;
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\dto\response\ExecutionResponse.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.dto.response;
+
+import io.deccan.controlplane.execution.enums.ExecutionStatus;
+import lombok.Builder;
+import lombok.Getter;
+
+import java.time.OffsetDateTime;
+import java.util.UUID;
+
+@Getter
+@Builder
+public class ExecutionResponse {
+
+    private UUID id;
+
+    private UUID workflowId;
+
+    private Integer workflowVersion;
+
+    private ExecutionStatus status;
+
+    private OffsetDateTime startedAt;
+
+    private OffsetDateTime finishedAt;
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\engine\WorkflowExecutor.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.engine;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.deccan.controlplane.execution.engine.node.NodeExecutor;
+import io.deccan.controlplane.workflow.definition.WorkflowDefinition;
+import io.deccan.controlplane.workflow.definition.node.WorkflowNode;
+import io.deccan.controlplane.workflow.entity.WorkflowVersion;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+import io.deccan.controlplane.execution.context.ExecutionContext;
+import io.deccan.controlplane.execution.entity.WorkflowExecution;
+import io.deccan.controlplane.execution.graph.WorkflowGraph;
+import io.deccan.controlplane.execution.routing.ExecutionRouter;
+import io.deccan.controlplane.execution.node.entity.NodeExecution;
+import io.deccan.controlplane.execution.node.service.NodeExecutionService;
+
+import java.util.List;
+
+@Component
+@RequiredArgsConstructor
+public class WorkflowExecutor {
+
+    private final ObjectMapper objectMapper;
+    private final NodeExecutionService nodeExecutionService;
+
+    private final List<NodeExecutor> nodeExecutors;
+    private final WorkflowGraph workflowGraph;
+    private final ExecutionRouter executionRouter;
+
+    public void execute(
+        WorkflowExecution execution,
+        WorkflowVersion version){
+
+        try{
+
+            WorkflowDefinition definition =
+                    objectMapper.treeToValue(
+                            version.getDefinition(),
+                            WorkflowDefinition.class);
+            ExecutionContext context =
+                ExecutionContext.builder()
+                        .execution(execution)
+                        .input(execution.getInput())
+                        .build();
+
+            WorkflowNode current =
+        workflowGraph.findStartNode(
+                definition);
+
+        while (current != null) {
+
+            final WorkflowNode currentNode = current;
+
+           NodeExecutor executor =
+        nodeExecutors.stream()
+                .filter(e -> e.supports(currentNode))
+                .findFirst()
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "No executor registered for node type: "
+                                        + currentNode.getType()));
+
+                    NodeExecution nodeExecution =
+                            nodeExecutionService.start(
+                                    execution,
+                                    currentNode);
+
+                    try {
+
+                        executor.execute(
+                                currentNode,
+                                context);
+
+                        nodeExecutionService.complete(
+                                nodeExecution,
+                                context.getNodeOutputs()
+                                        .get(currentNode.getId()));
+
+                    }
+                    catch (Exception ex) {
+
+                        nodeExecutionService.fail(
+                                nodeExecution,
+                                ex.getMessage());
+
+                        throw ex;
+
+                    }
+
+                    List<WorkflowNode> next =
+                            workflowGraph.nextNodes(
+                                    definition,
+                                    currentNode);
+
+                    current =
+                            executionRouter.selectNextNode(
+                                    currentNode,
+                                    next,
+                                    context);
+
+        }
+
+        }
+        catch (Exception ex){
+
+            throw new RuntimeException(
+                    ex);
+
+        }
+
+    }
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\engine\node\NodeExecutor.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.engine.node;
+
+import io.deccan.controlplane.execution.context.ExecutionContext;
+import io.deccan.controlplane.workflow.definition.node.WorkflowNode;
+
+public interface NodeExecutor {
+
+    boolean supports(
+            WorkflowNode node);
+
+    void execute(
+            WorkflowNode node,
+            ExecutionContext context);
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\engine\node\NoOpNodeExecutor.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.engine.node;
+
+import io.deccan.controlplane.workflow.definition.node.WorkflowNode;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import io.deccan.controlplane.execution.context.ExecutionContext;
+
+
+@Slf4j
+@Component
+public class NoOpNodeExecutor
+        implements NodeExecutor {
+
+    @Override
+    public boolean supports(
+            WorkflowNode node){
+
+        return false;
+    }
+
+    @Override
+    public void execute(
+            WorkflowNode node,
+            ExecutionContext context){
+
+        log.info(
+                "Executing NOOP [{}]",
+                node.getId());
+
+    }
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\engine\node\impl\ConditionNodeExecutor.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.engine.node.impl;
+
+import io.deccan.controlplane.execution.engine.node.NodeExecutor;
+import io.deccan.controlplane.workflow.definition.node.WorkflowNode;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import io.deccan.controlplane.execution.context.ExecutionContext;
+import io.deccan.controlplane.execution.context.model.NodeResult;
+
+
+@Slf4j
+@Component
+public class ConditionNodeExecutor
+        implements NodeExecutor {
+
+    @Override
+    public boolean supports(
+            WorkflowNode node){
+
+        return "condition"
+                .equalsIgnoreCase(node.getType());
+
+    }
+
+    @Override
+    public void execute(
+            WorkflowNode node,
+            ExecutionContext context){
+
+        log.info(
+                "Executing Condition [{}]",
+                node.getId());
+
+        context.getNodeOutputs().put(
+        node.getId(),
+        NodeResult.builder()
+                .success(true)
+                .data(true)
+                .build());
+
+    }
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\engine\node\impl\HttpNodeExecutor.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.engine.node.impl;
+
+import io.deccan.controlplane.execution.engine.node.NodeExecutor;
+import io.deccan.controlplane.workflow.definition.node.WorkflowNode;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import lombok.RequiredArgsConstructor;
+import io.deccan.controlplane.execution.connector.ConnectorRequest;
+import io.deccan.controlplane.execution.connector.ConnectorRuntime;
+import io.deccan.controlplane.execution.connector.constants.ConnectorNames;
+import io.deccan.controlplane.execution.connector.resolver.ConnectorRuntimeResolver;
+import io.deccan.controlplane.execution.context.ExecutionContext;
+import io.deccan.controlplane.execution.context.model.NodeResult;
+import io.deccan.controlplane.execution.connector.ConnectorResponse;
+
+
+@Slf4j
+@Component
+@RequiredArgsConstructor
+
+public class HttpNodeExecutor
+        implements NodeExecutor {
+    private final ConnectorRuntimeResolver connectorRuntimeResolver;
+    @Override
+    public boolean supports(
+            WorkflowNode node){
+
+        return "http"
+                .equalsIgnoreCase(node.getType());
+
+    }
+
+    @Override
+    public void execute(
+            WorkflowNode node,
+            ExecutionContext context){
+
+        log.info(
+                "Executing HTTP node [{}]",
+                node.getId());
+
+        ConnectorRuntime runtime =
+        connectorRuntimeResolver.resolve(
+        ConnectorNames.HTTP);
+
+            ConnectorResponse response =
+                    runtime.execute(
+
+                            ConnectorRequest.builder()
+
+                                    .connector("http")
+
+                                    .configuration(
+                                            node.getConfiguration())
+
+                                    .build()
+
+                    );
+
+            context.getNodeOutputs().put(
+
+                    node.getId(),
+
+                    NodeResult.builder()
+
+                            .success(
+                                    response.isSuccess())
+
+                            .data(
+                                    response.getBody())
+
+                            .error(
+                                    response.getError())
+
+                            .build()
+
+            );
+
+    }
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\engine\node\impl\ManualTriggerExecutor.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.engine.node.impl;
+
+import io.deccan.controlplane.execution.engine.node.NodeExecutor;
+import io.deccan.controlplane.workflow.definition.node.WorkflowNode;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import io.deccan.controlplane.execution.context.ExecutionContext;
+import io.deccan.controlplane.execution.context.model.NodeResult;
+
+
+
+@Slf4j
+@Component
+public class ManualTriggerExecutor
+        implements NodeExecutor {
+
+    @Override
+    public boolean supports(
+            WorkflowNode node) {
+
+        return "manual-trigger"
+                .equalsIgnoreCase(node.getType());
+
+    }
+
+    @Override
+    public void execute(
+            WorkflowNode node,
+            ExecutionContext context){
+
+        log.info(
+                "Executing Manual Trigger [{}]",
+                node.getId());
+
+
+        context.getNodeOutputs().put(
+                node.getId(),
+                NodeResult.builder()
+                        .success(true)
+                        .data("Workflow triggered")
+                        .build());
+
+    }
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\engine\node\impl\ResponseNodeExecutor.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.engine.node.impl;
+
+import io.deccan.controlplane.execution.engine.node.NodeExecutor;
+import io.deccan.controlplane.workflow.definition.node.WorkflowNode;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import io.deccan.controlplane.execution.context.ExecutionContext;
+import io.deccan.controlplane.execution.context.model.NodeResult;
+
+
+@Slf4j
+@Component
+public class ResponseNodeExecutor
+        implements NodeExecutor {
+
+    @Override
+    public boolean supports(
+            WorkflowNode node){
+
+        return "response"
+                .equalsIgnoreCase(node.getType());
+
+    }
+
+    @Override
+    public void execute(
+            WorkflowNode node,
+            ExecutionContext context){
+
+        log.info(
+                "Executing Response [{}]",
+                node.getId());
+
+        context.getNodeOutputs().put(
+        node.getId(),
+        NodeResult.builder()
+                .success(true)
+                .data("Workflow completed")
+                .build());
+
+    }
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\entity\WorkflowExecution.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.entity;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import io.deccan.controlplane.common.entity.BaseEntity;
+import io.deccan.controlplane.execution.enums.ExecutionStatus;
+import io.deccan.controlplane.workflow.entity.Workflow;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+import java.time.OffsetDateTime;
+
+@Getter
+@Setter
+@Entity
+@Table(name="workflow_executions")
+public class WorkflowExecution extends BaseEntity {
+
+    @ManyToOne(fetch=FetchType.LAZY)
+    @JoinColumn(name="workflow_id")
+    private Workflow workflow;
+
+    @Column(name="workflow_version",nullable=false)
+    private Integer workflowVersion;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable=false,length=50)
+    private ExecutionStatus status;
+
+    @Column(name="started_at",nullable=false)
+    private OffsetDateTime startedAt;
+
+    @Column(name="finished_at")
+    private OffsetDateTime finishedAt;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition="jsonb")
+    private JsonNode input;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition="jsonb")
+    private JsonNode output;
+
+    @Column(name="error_message")
+    private String errorMessage;
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\enums\ExecutionStatus.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.enums;
+
+public enum ExecutionStatus {
+
+    PENDING,
+
+    RUNNING,
+
+    COMPLETED,
+
+    FAILED,
+
+    CANCELLED
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\event\ExecutionEventPublisher.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.event;
+
+import io.deccan.controlplane.execution.event.model.ExecutionEvent;
+
+public interface ExecutionEventPublisher {
+
+    void publish(
+            ExecutionEvent event);
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\event\KafkaExecutionEventPublisher.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.event;
+
+import io.deccan.controlplane.execution.event.model.ExecutionEvent;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.stereotype.Component;
+import io.deccan.controlplane.execution.event.constants.EventTopics;
+
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class KafkaExecutionEventPublisher
+        implements ExecutionEventPublisher {
+
+    private static final String TOPIC = EventTopics.EXECUTION_EVENTS;
+
+    private final KafkaTemplate<String,Object>
+            kafkaTemplate;
+
+    @Override
+    public void publish(
+            ExecutionEvent event){
+
+        kafkaTemplate.send(
+                TOPIC,
+                event.getExecutionId().toString(),
+                event);
+
+        log.info(
+                "Published execution event [{}]",
+                event.getType());
+
+    }
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\event\constants\EventTopics.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.event.constants;
+
+public final class EventTopics {
+
+    private EventTopics() {
+    }
+
+    public static final String EXECUTION_EVENTS =
+            "deccan.execution.events";
+
+    public static final String WORKFLOW_EVENTS =
+            "deccan.workflow.events";
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\event\consumer\ExecutionEventConsumer.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.event.consumer;
+
+import io.deccan.controlplane.execution.event.constants.EventTopics;
+import io.deccan.controlplane.execution.event.model.ExecutionEvent;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.stereotype.Component;
+
+@Slf4j
+@Component
+public class ExecutionEventConsumer {
+
+    @KafkaListener(
+        topics = EventTopics.EXECUTION_EVENTS,
+                groupId = "deccan-control-plane",
+                containerFactory = "executionEventKafkaListenerContainerFactory")
+        public void consume(
+                ExecutionEvent event) {
+
+        log.info(
+                "Received execution event [{}] for execution [{}]",
+                event.getType(),
+                event.getExecutionId());
+
+        }
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\event\model\ExecutionEvent.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.event.model;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.time.OffsetDateTime;
+import java.util.UUID;
+
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class ExecutionEvent {
+
+    private UUID executionId;
+
+    private UUID workflowId;
+
+    private String type;
+
+    private OffsetDateTime timestamp;
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\graph\ExecutionWorkflowGraph.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.graph;
+
+import io.deccan.controlplane.workflow.definition.edge.WorkflowEdge;
+import io.deccan.controlplane.workflow.definition.node.WorkflowNode;
+import lombok.Builder;
+import lombok.Getter;
+
+import java.util.List;
+import java.util.Map;
+
+@Getter
+@Builder
+public class ExecutionWorkflowGraph {
+
+    private final Map<String, WorkflowNode> nodes;
+
+    private final Map<String, List<WorkflowEdge>> incomingEdges;
+
+    private final Map<String, List<WorkflowEdge>> outgoingEdges;
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\graph\WorkflowGraph.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.graph;
+
+import io.deccan.controlplane.workflow.definition.WorkflowDefinition;
+import io.deccan.controlplane.workflow.definition.edge.WorkflowEdge;
+import io.deccan.controlplane.workflow.definition.node.WorkflowNode;
+import org.springframework.stereotype.Component;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
+@Component
+public class WorkflowGraph {
+
+    public WorkflowNode findStartNode(
+            WorkflowDefinition definition) {
+
+        Set<String> targets =
+                definition.getEdges()
+                        .stream()
+                        .map(WorkflowEdge::getTarget)
+                        .collect(Collectors.toSet());
+
+        return definition.getNodes()
+                .stream()
+                .filter(node -> !targets.contains(node.getId()))
+                .findFirst()
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "No start node found"));
+
+    }
+
+    public List<WorkflowNode> nextNodes(
+
+            WorkflowDefinition definition,
+
+            WorkflowNode current) {
+
+        Map<String, WorkflowNode> nodes =
+                definition.getNodes()
+                        .stream()
+                        .collect(Collectors.toMap(
+                                WorkflowNode::getId,
+                                n -> n));
+
+        List<WorkflowNode> result =
+                new ArrayList<>();
+
+        for (WorkflowEdge edge :
+                definition.getEdges()) {
+
+            if (!edge.getSource()
+                    .equals(current.getId())) {
+
+                continue;
+
+            }
+
+            WorkflowNode next =
+                    nodes.get(edge.getTarget());
+
+            if (next != null) {
+
+                result.add(next);
+
+            }
+
+        }
+
+        return result;
+
+    }
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\graph\WorkflowGraphService.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.graph;
+
+import io.deccan.controlplane.workflow.entity.WorkflowVersion;
+
+public interface WorkflowGraphService {
+
+    ExecutionWorkflowGraph buildGraph(
+            WorkflowVersion version);
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\graph\WorkflowGraphServiceImpl.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.graph;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.deccan.controlplane.workflow.definition.WorkflowDefinition;
+import io.deccan.controlplane.workflow.definition.edge.WorkflowEdge;
+import io.deccan.controlplane.workflow.definition.node.WorkflowNode;
+import io.deccan.controlplane.workflow.entity.WorkflowVersion;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@Service
+@RequiredArgsConstructor
+public class WorkflowGraphServiceImpl
+        implements WorkflowGraphService {
+
+    private final ObjectMapper objectMapper;
+
+    @Override
+    public ExecutionWorkflowGraph buildGraph(
+            WorkflowVersion version) {
+
+        try {
+
+            WorkflowDefinition definition =
+                    objectMapper.treeToValue(
+                            version.getDefinition(),
+                            WorkflowDefinition.class);
+
+            Map<String, WorkflowNode> nodes =
+                    new HashMap<>();
+
+            Map<String, List<WorkflowEdge>> incoming =
+                    new HashMap<>();
+
+            Map<String, List<WorkflowEdge>> outgoing =
+                    new HashMap<>();
+
+            for (WorkflowNode node : definition.getNodes()) {
+
+                nodes.put(
+                        node.getId(),
+                        node);
+
+                incoming.put(
+                        node.getId(),
+                        new ArrayList<>());
+
+                outgoing.put(
+                        node.getId(),
+                        new ArrayList<>());
+
+            }
+
+            for (WorkflowEdge edge : definition.getEdges()) {
+
+                outgoing.get(edge.getSource())
+                        .add(edge);
+
+                incoming.get(edge.getTarget())
+                        .add(edge);
+
+            }
+
+            return ExecutionWorkflowGraph.builder()
+                    .nodes(nodes)
+                    .incomingEdges(incoming)
+                    .outgoingEdges(outgoing)
+                    .build();
+
+        } catch (Exception ex) {
+
+            throw new IllegalStateException(
+                    "Unable to build workflow graph",
+                    ex);
+
+        }
+
+    }
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\mapper\ExecutionMapper.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.mapper;
+
+import io.deccan.controlplane.execution.dto.response.ExecutionResponse;
+import io.deccan.controlplane.execution.entity.WorkflowExecution;
+import org.springframework.stereotype.Component;
+
+@Component
+public class ExecutionMapper {
+
+    public ExecutionResponse toResponse(
+            WorkflowExecution execution){
+
+        return ExecutionResponse.builder()
+                .id(execution.getId())
+                .workflowId(
+                        execution.getWorkflow().getId())
+                .workflowVersion(
+                        execution.getWorkflowVersion())
+                .status(execution.getStatus())
+                .startedAt(execution.getStartedAt())
+                .finishedAt(execution.getFinishedAt())
+                .build();
+
+    }
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\node\entity\NodeExecution.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.node.entity;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import io.deccan.controlplane.common.entity.BaseEntity;
+import io.deccan.controlplane.execution.entity.WorkflowExecution;
+import io.deccan.controlplane.execution.enums.ExecutionStatus;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+import java.time.OffsetDateTime;
+
+@Getter
+@Setter
+@Entity
+@Table(name = "node_executions")
+public class NodeExecution extends BaseEntity {
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "workflow_execution_id")
+    private WorkflowExecution workflowExecution;
+
+    @Column(nullable = false)
+    private String nodeId;
+
+    @Column(nullable = false)
+    private String nodeType;
+
+    @Enumerated(EnumType.STRING)
+    private ExecutionStatus status;
+
+    private OffsetDateTime startedAt;
+
+    private OffsetDateTime finishedAt;
+
+    private Long durationMs;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private JsonNode output;
+
+    private String errorMessage;
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\node\repository\NodeExecutionRepository.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.node.repository;
+
+import io.deccan.controlplane.execution.entity.WorkflowExecution;
+import io.deccan.controlplane.execution.node.entity.NodeExecution;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+import java.util.UUID;
+
+public interface NodeExecutionRepository
+        extends JpaRepository<NodeExecution, UUID> {
+
+    List<NodeExecution> findByWorkflowExecutionOrderByStartedAt(
+            WorkflowExecution execution);
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\node\service\NodeExecutionService.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.node.service;
+
+import io.deccan.controlplane.execution.entity.WorkflowExecution;
+import io.deccan.controlplane.execution.node.entity.NodeExecution;
+import io.deccan.controlplane.workflow.definition.node.WorkflowNode;
+
+public interface NodeExecutionService {
+
+    NodeExecution start(
+            WorkflowExecution execution,
+            WorkflowNode node);
+
+    void complete(
+            NodeExecution nodeExecution,
+            Object output);
+
+    void fail(
+            NodeExecution nodeExecution,
+            String error);
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\node\service\NodeExecutionServiceImpl.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.node.service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.deccan.controlplane.execution.entity.WorkflowExecution;
+import io.deccan.controlplane.execution.enums.ExecutionStatus;
+import io.deccan.controlplane.execution.node.entity.NodeExecution;
+import io.deccan.controlplane.execution.node.repository.NodeExecutionRepository;
+import io.deccan.controlplane.workflow.definition.node.WorkflowNode;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.time.Duration;
+import java.time.OffsetDateTime;
+
+@Service
+@RequiredArgsConstructor
+public class NodeExecutionServiceImpl
+        implements NodeExecutionService {
+
+    private final NodeExecutionRepository repository;
+
+    private final ObjectMapper objectMapper;
+
+    @Override
+    public NodeExecution start(
+            WorkflowExecution execution,
+            WorkflowNode node) {
+
+        NodeExecution entity =
+                new NodeExecution();
+
+        entity.setWorkflowExecution(execution);
+        entity.setNodeId(node.getId());
+        entity.setNodeType(node.getType());
+
+        entity.setStatus(
+                ExecutionStatus.RUNNING);
+
+        entity.setStartedAt(
+                OffsetDateTime.now());
+
+        return repository.save(entity);
+
+    }
+
+    @Override
+    public void complete(
+            NodeExecution nodeExecution,
+            Object output) {
+
+        nodeExecution.setStatus(
+                ExecutionStatus.COMPLETED);
+
+        nodeExecution.setFinishedAt(
+                OffsetDateTime.now());
+
+        nodeExecution.setDurationMs(
+                Duration.between(
+                        nodeExecution.getStartedAt(),
+                        nodeExecution.getFinishedAt())
+                        .toMillis());
+
+        nodeExecution.setOutput(
+                objectMapper.valueToTree(output));
+
+        repository.save(nodeExecution);
+
+    }
+
+    @Override
+    public void fail(
+            NodeExecution nodeExecution,
+            String error) {
+
+        nodeExecution.setStatus(
+                ExecutionStatus.FAILED);
+
+        nodeExecution.setFinishedAt(
+                OffsetDateTime.now());
+
+        nodeExecution.setDurationMs(
+                Duration.between(
+                        nodeExecution.getStartedAt(),
+                        nodeExecution.getFinishedAt())
+                        .toMillis());
+
+        nodeExecution.setErrorMessage(error);
+
+        repository.save(nodeExecution);
+
+    }
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\repository\WorkflowExecutionRepository.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.repository;
+
+import io.deccan.controlplane.execution.entity.WorkflowExecution;
+import io.deccan.controlplane.execution.enums.ExecutionStatus;
+import io.deccan.controlplane.workflow.entity.Workflow;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+import java.util.UUID;
+
+public interface WorkflowExecutionRepository
+        extends JpaRepository<WorkflowExecution,UUID>{
+
+    List<WorkflowExecution>
+    findByWorkflowOrderByStartedAtDesc(
+            Workflow workflow);
+
+    List<WorkflowExecution>
+    findByStatus(
+            ExecutionStatus status);
+    boolean existsByWorkflowAndStatus(
+        Workflow workflow,
+        ExecutionStatus status);
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\retry\RetryPolicy.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.retry;
+
+import lombok.Builder;
+import lombok.Getter;
+
+@Getter
+@Builder
+public class RetryPolicy {
+
+    private int maxAttempts;
+
+    private long delaySeconds;
+
+    private boolean exponentialBackoff;
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\retry\RetryPolicyService.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.retry;
+
+import io.deccan.controlplane.execution.entity.WorkflowExecution;
+import io.deccan.controlplane.execution.repository.WorkflowExecutionRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+@Service
+@RequiredArgsConstructor
+public class RetryPolicyService {
+
+    private final WorkflowExecutionRepository repository;
+
+    public void validateRetry(
+            WorkflowExecution execution,
+            RetryPolicy policy) {
+
+        long attempts =
+                repository.findByWorkflowOrderByStartedAtDesc(
+                                execution.getWorkflow())
+                        .stream()
+                        .filter(e ->
+                                e.getStatus().name().equals("FAILED"))
+                        .count();
+
+        if (attempts >= policy.getMaxAttempts()) {
+
+            throw new IllegalStateException(
+                    "Maximum retry attempts exceeded");
+
+        }
+
+    }
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\routing\ExecutionRouter.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.routing;
+
+import io.deccan.controlplane.execution.context.ExecutionContext;
+import io.deccan.controlplane.workflow.definition.node.WorkflowNode;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+
+@Component
+public class ExecutionRouter {
+
+    public WorkflowNode selectNextNode(
+
+            WorkflowNode current,
+
+            List<WorkflowNode> candidates,
+
+            ExecutionContext context){
+
+        if(candidates.isEmpty()){
+
+            return null;
+
+        }
+
+        /*
+         * Temporary implementation.
+         *
+         * Later:
+         * - Condition nodes
+         * - Parallel nodes
+         * - Switch nodes
+         * - Loops
+         */
+
+        return candidates.get(0);
+
+    }
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\service\ExecutionService.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.service;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import io.deccan.controlplane.execution.entity.WorkflowExecution;
+
+import java.util.List;
+import java.util.UUID;
+
+public interface ExecutionService {
+
+    WorkflowExecution executeWorkflow(
+            UUID workflowId,
+            JsonNode input
+    );
+
+    WorkflowExecution getExecution(
+            UUID executionId
+    );
+
+    List<WorkflowExecution> getExecutions(
+            UUID workflowId
+    );
+    void cancelExecution(
+        UUID executionId);
+    WorkflowExecution retryExecution(
+        UUID executionId);
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\service\ExecutionServiceImpl.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.service;
+
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.fasterxml.jackson.databind.JsonNode;
+
+import io.deccan.controlplane.execution.engine.WorkflowExecutor;
+import io.deccan.controlplane.execution.entity.WorkflowExecution;
+import io.deccan.controlplane.execution.enums.ExecutionStatus;
+import io.deccan.controlplane.execution.event.ExecutionEventPublisher;
+import io.deccan.controlplane.execution.event.model.ExecutionEvent;
+import io.deccan.controlplane.execution.repository.WorkflowExecutionRepository;
+import io.deccan.controlplane.execution.retry.RetryPolicy;
+import io.deccan.controlplane.execution.retry.RetryPolicyService;
+import io.deccan.controlplane.execution.state.ExecutionStateMachine;
+import io.deccan.controlplane.task.service.ExecutionTaskService;
+import io.deccan.controlplane.workflow.entity.Workflow;
+import io.deccan.controlplane.workflow.entity.WorkflowVersion;
+import io.deccan.controlplane.workflow.repository.WorkflowRepository;
+import io.deccan.controlplane.workflow.repository.WorkflowVersionRepository;
+import lombok.RequiredArgsConstructor;
+import io.deccan.controlplane.scheduler.service.WorkflowSchedulerService;
+
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class ExecutionServiceImpl
+        implements ExecutionService {
+
+    private final WorkflowRepository workflowRepository;
+
+    private final WorkflowExecutionRepository executionRepository;
+    private final ExecutionStateMachine executionStateMachine;
+
+    private final WorkflowVersionRepository workflowVersionRepository;
+    private final ExecutionEventPublisher executionEventPublisher;
+
+    private final RetryPolicyService retryPolicyService;
+    private final ExecutionTaskService executionTaskService;
+    private final WorkflowSchedulerService workflowSchedulerService;
+    @Override
+    public WorkflowExecution executeWorkflow(
+            UUID workflowId,
+            JsonNode input){
+
+        Workflow workflow =
+                workflowRepository.findById(workflowId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Workflow not found"));
+        if (executionRepository.existsByWorkflowAndStatus(
+        workflow,
+        ExecutionStatus.RUNNING)) {
+
+                throw new IllegalStateException(
+                        "Workflow already has a running execution");
+
+        }
+
+        WorkflowExecution execution =
+                new WorkflowExecution();
+
+        execution.setWorkflow(workflow);
+
+        execution.setWorkflowVersion(
+                workflow.getCurrentVersion());
+
+        execution.setStatus(
+        ExecutionStatus.PENDING);
+
+        execution.setStartedAt(
+        OffsetDateTime.now());
+
+        execution.setInput(input);
+
+        execution = executionRepository.save(
+                execution);
+
+        executionStateMachine.start(
+        execution);
+
+        execution =
+                executionRepository.save(
+                        execution);
+        executionEventPublisher.publish(
+
+        ExecutionEvent.builder()
+
+                .executionId(
+                        execution.getId())
+
+                .workflowId(
+                        workflow.getId())
+
+                .type(
+                        "EXECUTION_STARTED")
+
+                .timestamp(
+                        OffsetDateTime.now())
+
+                .build()
+
+        );
+
+        WorkflowVersion version =
+                workflowVersionRepository
+                        .findFirstByWorkflowOrderByVersionDesc(
+                                workflow)
+                        .orElseThrow(() ->
+                        new IllegalStateException(
+                                "No published workflow version found."));
+
+        try{
+
+            executionTaskService.createTasks(
+                execution,
+                version);
+        workflowSchedulerService.initializeWorkflow(
+                execution,
+                version);
+
+                execution = executionRepository.save(
+        execution);
+        executionEventPublisher.publish(
+
+                ExecutionEvent.builder()
+
+                        .executionId(
+                                execution.getId())
+
+                        .workflowId(
+                                workflow.getId())
+
+                        .type(
+                                "TASKS_CREATED")
+
+                        .timestamp(
+                                OffsetDateTime.now())
+
+                        .build()
+
+        );
+
+        }
+        catch(Exception ex){
+
+                        executionStateMachine.fail(
+                        execution,
+                        ex.getMessage());
+                                 execution =
+                executionRepository.save(
+                        execution);
+
+                executionEventPublisher.publish(
+
+                        ExecutionEvent.builder()
+                                .executionId(execution.getId())
+                                .workflowId(workflow.getId())
+                                .type("EXECUTION_FAILED")
+                                .timestamp(OffsetDateTime.now())
+                                .build()
+
+                );
+
+                throw ex;
+
+        }
+
+        // execution =
+        //         executionRepository.save(
+        //                 execution);
+
+        return execution;
+
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public WorkflowExecution getExecution(
+            UUID executionId){
+
+        return executionRepository.findById(executionId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Execution not found"));
+
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<WorkflowExecution> getExecutions(
+            UUID workflowId){
+
+        Workflow workflow =
+                workflowRepository.findById(workflowId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Workflow not found"));
+
+        return executionRepository
+                .findByWorkflowOrderByStartedAtDesc(
+                        workflow);
+
+    }
+
+        @Override
+        public void cancelExecution(
+                UUID executionId) {
+
+                WorkflowExecution execution =
+                        executionRepository.findById(
+                                executionId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Execution not found"));
+
+                executionStateMachine.cancel(
+                        execution);
+
+                executionRepository.save(
+                        execution);
+
+                executionEventPublisher.publish(
+
+                        ExecutionEvent.builder()
+                                .executionId(
+                                        execution.getId())
+                                .workflowId(
+                                        execution.getWorkflow().getId())
+                                .type(
+                                        "EXECUTION_CANCELLED")
+                                .timestamp(
+                                        OffsetDateTime.now())
+                                .build()
+
+                );
+
+        }
+        @Override
+        public WorkflowExecution retryExecution(
+                UUID executionId) {
+
+                WorkflowExecution previous =
+                        executionRepository.findById(
+                                executionId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Execution not found"));
+
+                if (previous.getStatus() != ExecutionStatus.FAILED) {
+
+                        throw new IllegalStateException(
+                                "Only failed executions can be retried");
+
+                }
+                executionEventPublisher.publish(
+
+                ExecutionEvent.builder()
+
+                                .executionId(
+                                        previous.getId())
+
+                                .workflowId(
+                                        previous.getWorkflow().getId())
+
+                                .type(
+                                        "EXECUTION_RETRY_REQUESTED")
+
+                                .timestamp(
+                                        OffsetDateTime.now())
+
+                                .build()
+
+                );
+                RetryPolicy policy =
+                        RetryPolicy.builder()
+                                .maxAttempts(3)
+                                .delaySeconds(5)
+                                .exponentialBackoff(true)
+                                .build();
+
+                retryPolicyService.validateRetry(
+                        previous,
+                        policy);
+
+                return executeWorkflow(
+
+                        previous.getWorkflow().getId(),
+
+                        previous.getInput()
+
+                );
+
+        }
+        
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\execution\state\ExecutionStateMachine.java
+====================================================================================================
+
+package io.deccan.controlplane.execution.state;
+
+import io.deccan.controlplane.execution.entity.WorkflowExecution;
+import io.deccan.controlplane.execution.enums.ExecutionStatus;
+import org.springframework.stereotype.Component;
+
+import java.time.OffsetDateTime;
+
+@Component
+public class ExecutionStateMachine {
+
+    public void start(
+            WorkflowExecution execution){
+
+        ensureState(
+                execution,
+                ExecutionStatus.PENDING
+        );
+
+        execution.setStatus(
+                ExecutionStatus.RUNNING
+        );
+
+    }
+
+    public void complete(
+            WorkflowExecution execution){
+
+        ensureState(
+                execution,
+                ExecutionStatus.RUNNING
+        );
+
+        execution.setStatus(
+                ExecutionStatus.COMPLETED
+        );
+
+        execution.setFinishedAt(
+                OffsetDateTime.now()
+        );
+
+    }
+
+    public void fail(
+            WorkflowExecution execution,
+            String errorMessage){
+
+        ensureState(
+                execution,
+                ExecutionStatus.RUNNING
+        );
+
+        execution.setStatus(
+                ExecutionStatus.FAILED
+        );
+
+        execution.setErrorMessage(
+                errorMessage
+        );
+
+        execution.setFinishedAt(
+                OffsetDateTime.now()
+        );
+
+    }
+
+    public void cancel(
+            WorkflowExecution execution){
+
+        if(execution.getStatus()==ExecutionStatus.COMPLETED){
+
+            throw new IllegalStateException(
+                    "Completed execution cannot be cancelled"
+            );
+
+        }
+
+        if(execution.getStatus()==ExecutionStatus.FAILED){
+
+            throw new IllegalStateException(
+                    "Failed execution cannot be cancelled"
+            );
+
+        }
+
+        execution.setStatus(
+                ExecutionStatus.CANCELLED
+        );
+
+        execution.setFinishedAt(
+                OffsetDateTime.now()
+        );
+
+    }
+
+    private void ensureState(
+            WorkflowExecution execution,
+            ExecutionStatus expected){
+
+        if(execution.getStatus()!=expected){
+
+            throw new IllegalStateException(
+
+                    "Invalid state transition. Expected "
+
+                            + expected
+
+                            + " but was "
+
+                            + execution.getStatus()
+
+            );
+
+        }
+
+    }
+
+}
+
+

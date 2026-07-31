@@ -7,12 +7,14 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 import io.deccan.worker.config.ControlPlaneProperties;
 import io.deccan.worker.config.WorkerProperties;
+import io.deccan.worker.execution.ExecutionProperties;
 
 @EnableScheduling
 @SpringBootApplication
 @ConfigurationPropertiesScan(basePackageClasses = {
         WorkerProperties.class,
-        ControlPlaneProperties.class
+        ControlPlaneProperties.class,
+        ExecutionProperties.class
 })
 public class WorkerApplication {
 

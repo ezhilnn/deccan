@@ -1,11 +1,13 @@
 package io.deccan.worker.service;
 
-import io.deccan.worker.dto.request.TaskResultRequest;
-import lombok.RequiredArgsConstructor;
+import java.util.UUID;
+
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
-import java.util.UUID;
+import io.deccan.worker.dto.request.TaskResultRequest;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -14,18 +16,20 @@ public class TaskResultServiceImpl
 
     private final RestClient restClient;
 
+    private final AuthenticationService authenticationService;
+
     @Override
-    public void reportSuccess(
-            UUID taskId) {
+    public void reportSuccess(UUID taskId) {
 
-        TaskResultRequest request =
-                new TaskResultRequest();
-
+        TaskResultRequest request = new TaskResultRequest();
         request.setSuccess(true);
+
+        String token = authenticationService.getToken();
 
         restClient
                 .post()
                 .uri("/tasks/{taskId}/result", taskId)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                 .body(request)
                 .retrieve()
                 .toBodilessEntity();
@@ -33,17 +37,17 @@ public class TaskResultServiceImpl
     }
 
     @Override
-    public void reportFailure(
-            UUID taskId) {
+    public void reportFailure(UUID taskId) {
 
-        TaskResultRequest request =
-                new TaskResultRequest();
-
+        TaskResultRequest request = new TaskResultRequest();
         request.setSuccess(false);
+
+        String token = authenticationService.getToken();
 
         restClient
                 .post()
                 .uri("/tasks/{taskId}/result", taskId)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                 .body(request)
                 .retrieve()
                 .toBodilessEntity();

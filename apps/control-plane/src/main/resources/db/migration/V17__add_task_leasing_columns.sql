@@ -7,6 +7,6 @@ ON execution_tasks(status, created_at);
 CREATE INDEX idx_execution_tasks_lease_until
 ON execution_tasks(lease_until);
 
-CREATE INDEX idx_workers_status
+CREATE INDEX IF NOT EXISTS idx_workers_status
 ON workers(status);
 

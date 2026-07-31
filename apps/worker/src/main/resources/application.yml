@@ -35,7 +35,9 @@ management:
 
 deccan:
   control-plane:
-    base-url: http://localhost:8088/api
+    base-url: http://control-plane:8088/api
+    email: admin@deccan.dev
+    password: change-me
 
 worker:
   name: worker-01

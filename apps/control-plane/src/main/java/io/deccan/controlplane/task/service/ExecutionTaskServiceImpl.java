@@ -1,7 +1,19 @@
 package io.deccan.controlplane.task.service;
 
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.deccan.controlplane.execution.entity.WorkflowExecution;
+import io.deccan.controlplane.execution.enums.ExecutionStatus;
+import io.deccan.controlplane.execution.repository.WorkflowExecutionRepository;
+import io.deccan.controlplane.scheduler.service.WorkflowSchedulerService;
 import io.deccan.controlplane.task.entity.ExecutionTask;
 import io.deccan.controlplane.task.enums.TaskStatus;
 import io.deccan.controlplane.task.factory.ExecutionTaskFactory;
@@ -13,17 +25,6 @@ import io.deccan.controlplane.worker.service.WorkerService;
 import io.deccan.controlplane.workflow.definition.WorkflowDefinition;
 import io.deccan.controlplane.workflow.entity.WorkflowVersion;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.Instant;
-import java.util.List;
-import io.deccan.controlplane.execution.enums.ExecutionStatus;
-import io.deccan.controlplane.execution.repository.WorkflowExecutionRepository;
-import io.deccan.controlplane.scheduler.service.WorkflowSchedulerService;
-
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -90,10 +91,11 @@ public class ExecutionTaskServiceImpl
                                 PageRequest.of(0, 1))
                         .stream()
                         .findFirst()
-                        .orElseThrow(() ->
-                                new IllegalStateException(
-                                        "No pending task available"));
-
+                        .orElse(null);
+        
+        if (task == null) {
+        return null;
+        }
         task.setWorker(worker);
 
         task.setStatus(TaskStatus.LEASED);

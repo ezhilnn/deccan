@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import io.deccan.controlplane.execution.engine.WorkflowExecutor;
 import io.deccan.controlplane.execution.entity.WorkflowExecution;
 import io.deccan.controlplane.execution.enums.ExecutionStatus;
 import io.deccan.controlplane.execution.event.ExecutionEventPublisher;
@@ -18,13 +17,13 @@ import io.deccan.controlplane.execution.repository.WorkflowExecutionRepository;
 import io.deccan.controlplane.execution.retry.RetryPolicy;
 import io.deccan.controlplane.execution.retry.RetryPolicyService;
 import io.deccan.controlplane.execution.state.ExecutionStateMachine;
+import io.deccan.controlplane.scheduler.service.WorkflowSchedulerService;
 import io.deccan.controlplane.task.service.ExecutionTaskService;
 import io.deccan.controlplane.workflow.entity.Workflow;
 import io.deccan.controlplane.workflow.entity.WorkflowVersion;
 import io.deccan.controlplane.workflow.repository.WorkflowRepository;
 import io.deccan.controlplane.workflow.repository.WorkflowVersionRepository;
 import lombok.RequiredArgsConstructor;
-import io.deccan.controlplane.scheduler.service.WorkflowSchedulerService;
 
 @Service
 @RequiredArgsConstructor
