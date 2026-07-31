@@ -57,8 +57,8 @@ public class WorkflowExecutor {
                                 .input(execution.getInput())
                                 .build();
 
-                context.getNodeOutputs().clear();
-                context.getVariables().clear();
+                context.clearNodeOutputs();
+                context.clearVariables();
 
             WorkflowNode current =
         workflowGraph.findStartNode(
@@ -91,8 +91,8 @@ public class WorkflowExecutor {
 
                         nodeExecutionService.complete(
                                 nodeExecution,
-                                context.getNodeOutputs()
-                                        .get(currentNode.getId()));
+                                context.getNodeOutput(
+                        currentNode.getId()));
 
                     }
                     catch (Exception ex) {
