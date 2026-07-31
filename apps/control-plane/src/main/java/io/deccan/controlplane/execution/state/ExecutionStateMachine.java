@@ -67,21 +67,11 @@ public class ExecutionStateMachine {
     public void cancel(
             WorkflowExecution execution){
 
-        if(execution.getStatus()==ExecutionStatus.COMPLETED){
+        ensureState(
+            execution,
+            ExecutionStatus.RUNNING);
 
-            throw new IllegalStateException(
-                    "Completed execution cannot be cancelled"
-            );
 
-        }
-
-        if(execution.getStatus()==ExecutionStatus.FAILED){
-
-            throw new IllegalStateException(
-                    "Failed execution cannot be cancelled"
-            );
-
-        }
 
         execution.setStatus(
                 ExecutionStatus.CANCELLED
@@ -92,7 +82,16 @@ public class ExecutionStateMachine {
         );
 
     }
+    public boolean isTerminalState(
+        WorkflowExecution execution){
 
+        return execution.getStatus()==ExecutionStatus.COMPLETED
+
+                || execution.getStatus()==ExecutionStatus.FAILED
+
+                || execution.getStatus()==ExecutionStatus.CANCELLED;
+
+        }
     private void ensureState(
             WorkflowExecution execution,
             ExecutionStatus expected){
