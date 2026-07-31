@@ -9,12 +9,14 @@ import io.deccan.controlplane.workflow.definition.node.WorkflowNode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
 
 @Transactional
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class NodeExecutionServiceImpl
         implements NodeExecutionService {
@@ -41,6 +43,9 @@ public class NodeExecutionServiceImpl
 
         entity.setStartedAt(
                 OffsetDateTime.now());
+        log.info(
+        "Node execution started [{}]",
+        node.getId());
 
         return repository.save(entity);
 
@@ -65,6 +70,10 @@ public class NodeExecutionServiceImpl
 
         nodeExecution.setOutput(
                 objectMapper.valueToTree(output));
+        log.info(
+        "Node execution completed [{}] in {} ms",
+        nodeExecution.getNodeId(),
+        nodeExecution.getDurationMs());
 
         repository.save(nodeExecution);
 
@@ -88,6 +97,10 @@ public class NodeExecutionServiceImpl
                         .toMillis());
 
         nodeExecution.setErrorMessage(error);
+        log.error(
+        "Node execution failed [{}] : {}",
+        nodeExecution.getNodeId(),
+        error);
 
         repository.save(nodeExecution);
 

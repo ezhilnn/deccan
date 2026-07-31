@@ -25,8 +25,10 @@ import io.deccan.controlplane.workflow.entity.WorkflowVersion;
 import io.deccan.controlplane.workflow.repository.WorkflowRepository;
 import io.deccan.controlplane.workflow.repository.WorkflowVersionRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 @Transactional
 public class ExecutionServiceImpl
@@ -167,6 +169,10 @@ public class ExecutionServiceImpl
                                  execution =
                 executionRepository.save(
                         execution);
+                        log.error(
+        "Execution [{}] failed",
+        execution.getId(),
+        ex);
 
                 executionEventPublisher.publish(
 
@@ -186,6 +192,9 @@ public class ExecutionServiceImpl
         // execution =
         //         executionRepository.save(
         //                 execution);
+        log.info(
+        "Execution [{}] created successfully",
+        execution.getId());
 
         return execution;
 

@@ -23,8 +23,10 @@ import io.deccan.controlplane.workflow.definition.WorkflowDefinition;
 import io.deccan.controlplane.workflow.definition.node.WorkflowNode;
 import io.deccan.controlplane.workflow.entity.WorkflowVersion;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
+@Slf4j
 @RequiredArgsConstructor
 public class WorkflowExecutor {
 
@@ -60,6 +62,9 @@ public class WorkflowExecutor {
 
                 context.clearNodeOutputs();
                 context.clearVariables();
+                log.info(
+        "Starting workflow execution [{}]",
+        execution.getId());
 
             WorkflowNode current =
         workflowGraph.findStartNode(
@@ -84,6 +89,10 @@ public class WorkflowExecutor {
                                     currentNode);
 
                     try {
+                        log.info(
+                        "Executing node [{}] type=[{}]",
+                        currentNode.getId(),
+                        currentNode.getType());
                         
 
                         executor.execute(
@@ -94,6 +103,12 @@ public class WorkflowExecutor {
                                 nodeExecution,
                                 context.getNodeOutput(
                         currentNode.getId()));
+                        log.info(
+                        "Completed node [{}]",
+                        currentNode.getId());
+                        log.info(
+        "Workflow execution [{}] completed successfully",
+        execution.getId());
 
                     }
                     catch (Exception ex) {
@@ -143,6 +158,9 @@ public class WorkflowExecutor {
 
                 executionRepository.save(
                         execution);
+        log.info(
+        "Workflow execution [{}] completed successfully",
+        execution.getId());
 
                
 
@@ -175,6 +193,10 @@ public class WorkflowExecutor {
                                 .build()
 
                         );
+                        log.error(
+                "Workflow execution [{}] failed",
+                execution.getId(),
+                ex);
 
                 throw new RuntimeException(
                         ex);
