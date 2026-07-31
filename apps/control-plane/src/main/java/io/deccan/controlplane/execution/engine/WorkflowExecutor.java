@@ -1,20 +1,27 @@
 package io.deccan.controlplane.execution.engine;
 
+import java.time.OffsetDateTime;
+import java.util.List;
+
+import org.springframework.stereotype.Component;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.deccan.controlplane.execution.context.ExecutionContext;
 import io.deccan.controlplane.execution.engine.node.NodeExecutor;
+import io.deccan.controlplane.execution.entity.WorkflowExecution;
+import io.deccan.controlplane.execution.event.ExecutionEventPublisher;
+import io.deccan.controlplane.execution.event.model.ExecutionEvent;
+import io.deccan.controlplane.execution.graph.WorkflowGraph;
+import io.deccan.controlplane.execution.node.entity.NodeExecution;
+import io.deccan.controlplane.execution.node.service.NodeExecutionService;
+import io.deccan.controlplane.execution.repository.WorkflowExecutionRepository;
+import io.deccan.controlplane.execution.routing.ExecutionRouter;
+import io.deccan.controlplane.execution.state.ExecutionStateMachine;
 import io.deccan.controlplane.workflow.definition.WorkflowDefinition;
 import io.deccan.controlplane.workflow.definition.node.WorkflowNode;
 import io.deccan.controlplane.workflow.entity.WorkflowVersion;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
-import io.deccan.controlplane.execution.context.ExecutionContext;
-import io.deccan.controlplane.execution.entity.WorkflowExecution;
-import io.deccan.controlplane.execution.graph.WorkflowGraph;
-import io.deccan.controlplane.execution.routing.ExecutionRouter;
-import io.deccan.controlplane.execution.node.entity.NodeExecution;
-import io.deccan.controlplane.execution.node.service.NodeExecutionService;
-
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -26,22 +33,32 @@ public class WorkflowExecutor {
     private final List<NodeExecutor> nodeExecutors;
     private final WorkflowGraph workflowGraph;
     private final ExecutionRouter executionRouter;
+    private final ExecutionStateMachine executionStateMachine;
+    private final WorkflowExecutionRepository executionRepository;
+    private final ExecutionEventPublisher executionEventPublisher;
 
     public void execute(
         WorkflowExecution execution,
         WorkflowVersion version){
 
         try{
+                executionStateMachine.start(execution);
 
+                executionRepository.save(execution);
+
+            
             WorkflowDefinition definition =
                     objectMapper.treeToValue(
                             version.getDefinition(),
                             WorkflowDefinition.class);
-            ExecutionContext context =
-                ExecutionContext.builder()
-                        .execution(execution)
-                        .input(execution.getInput())
-                        .build();
+                ExecutionContext context =
+                        ExecutionContext.builder()
+                                .execution(execution)
+                                .input(execution.getInput())
+                                .build();
+
+                context.getNodeOutputs().clear();
+                context.getVariables().clear();
 
             WorkflowNode current =
         workflowGraph.findStartNode(
@@ -66,6 +83,7 @@ public class WorkflowExecutor {
                                     currentNode);
 
                     try {
+                        
 
                         executor.execute(
                                 currentNode,
@@ -99,12 +117,53 @@ public class WorkflowExecutor {
                                     context);
 
         }
+        execution.setOutput(
+
+        objectMapper.valueToTree(
+                context.getNodeOutputs())
+
+);
+
+                executionStateMachine.complete(
+                        execution);
+
+                executionRepository.save(
+                        execution);
+
+               
 
         }
         catch (Exception ex){
 
-            throw new RuntimeException(
-                    ex);
+                executionStateMachine.fail(
+                        execution,
+                        ex.getMessage());
+
+                executionRepository.save(
+                        execution);
+
+                executionEventPublisher.publish(
+
+                        ExecutionEvent.builder()
+
+                                .executionId(
+                                        execution.getId())
+
+                                .workflowId(
+                                        execution.getWorkflow().getId())
+
+                                .type(
+                                        "EXECUTION_FAILED")
+
+                                .timestamp(
+                                        OffsetDateTime.now())
+
+                                .build()
+
+                        );
+
+                throw new RuntimeException(
+                        ex);
 
         }
 
