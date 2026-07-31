@@ -31,12 +31,25 @@ public class ConditionNodeExecutor
                 "Executing Condition [{}]",
                 node.getId());
 
-        context.getNodeOutputs().put(
-        node.getId(),
-        NodeResult.builder()
-                .success(true)
-                .data(true)
-                .build());
+        boolean result =
+        node.getConfiguration()
+                .path("value")
+                .asBoolean(true);
+
+        context.putVariable(
+                "condition",
+                result);
+
+        context.putNodeOutput(
+
+                node.getId(),
+
+                NodeResult.builder()
+                        .success(true)
+                        .data(result)
+                        .build()
+
+        );
 
     }
 
