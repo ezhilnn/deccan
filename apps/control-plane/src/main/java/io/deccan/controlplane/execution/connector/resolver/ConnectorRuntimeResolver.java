@@ -5,25 +5,71 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import jakarta.annotation.PostConstruct;
+import java.util.HashMap;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
 public class ConnectorRuntimeResolver {
 
-    private final List<ConnectorRuntime> runtimes;
+        private final List<ConnectorRuntime> runtimes;
 
-    public ConnectorRuntime resolve(
-            String connector) {
+        private Map<String, ConnectorRuntime> runtimeMap;
 
-        return runtimes.stream()
-                .filter(runtime ->
-                        runtime.supports(connector))
-                .findFirst()
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "No connector runtime registered for: "
-                                        + connector));
+        public ConnectorRuntime resolve(
+                String connector) {
 
-    }
+                ConnectorRuntime runtime =
+                        runtimeMap.get(
+                                connector.toLowerCase());
+
+                if(runtime == null){
+
+                throw new IllegalArgumentException(
+
+                        "No connector runtime registered for: "
+
+                                + connector
+
+                );
+
+        }
+
+return runtime;
+
+        }
+        @PostConstruct
+        void initialize(){
+
+        runtimeMap = new HashMap<>();
+
+        for(ConnectorRuntime runtime : runtimes){
+
+                String connector =
+                        runtime.getClass()
+                                .getSimpleName()
+                                .replace("ConnectorRuntime","")
+                                .toLowerCase();
+
+                if(runtimeMap.containsKey(connector)){
+
+                throw new IllegalStateException(
+
+                        "Duplicate connector runtime: "
+
+                                + connector
+
+                );
+
+                }
+
+                runtimeMap.put(
+                        connector,
+                        runtime);
+
+        }
+
+        }
 
 }
