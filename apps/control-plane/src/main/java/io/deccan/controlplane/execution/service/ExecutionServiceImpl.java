@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import io.deccan.controlplane.execution.engine.WorkflowExecutor;
 import io.deccan.controlplane.execution.entity.WorkflowExecution;
 import io.deccan.controlplane.execution.enums.ExecutionStatus;
 import io.deccan.controlplane.execution.event.ExecutionEventPublisher;
@@ -42,6 +43,8 @@ public class ExecutionServiceImpl
     private final RetryPolicyService retryPolicyService;
     private final ExecutionTaskService executionTaskService;
     private final WorkflowSchedulerService workflowSchedulerService;
+    private final WorkflowExecutor workflowExecutor;
+
     @Override
     public WorkflowExecution executeWorkflow(
             UUID workflowId,
@@ -117,33 +120,43 @@ public class ExecutionServiceImpl
         try{
 
             executionTaskService.createTasks(
-                execution,
-                version);
-        workflowSchedulerService.initializeWorkflow(
-                execution,
-                version);
+                        execution,
+                        version);
 
-                execution = executionRepository.save(
-        execution);
-        executionEventPublisher.publish(
+                workflowSchedulerService.initializeWorkflow(
+                        execution,
+                        version);
 
-                ExecutionEvent.builder()
+                workflowExecutor.execute(
+                        execution,
+                        version);
 
-                        .executionId(
-                                execution.getId())
+                executionStateMachine.complete(
+                        execution);
 
-                        .workflowId(
-                                workflow.getId())
+                execution =
+                        executionRepository.save(
+                                execution);
 
-                        .type(
-                                "TASKS_CREATED")
+                executionEventPublisher.publish(
 
-                        .timestamp(
-                                OffsetDateTime.now())
+                        ExecutionEvent.builder()
 
-                        .build()
+                                .executionId(
+                                        execution.getId())
 
-        );
+                                .workflowId(
+                                        workflow.getId())
+
+                                .type(
+                                        "EXECUTION_COMPLETED")
+
+                                .timestamp(
+                                        OffsetDateTime.now())
+
+                                .build()
+
+                );
 
         }
         catch(Exception ex){
