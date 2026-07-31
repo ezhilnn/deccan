@@ -195,6 +195,12 @@ public class ExecutionServiceImpl
         log.info(
         "Execution [{}] created successfully",
         execution.getId());
+        if(execution.getStatus()==ExecutionStatus.RUNNING){
+
+        throw new IllegalStateException(
+                "Execution finished but is still RUNNING");
+
+        }
 
         return execution;
 

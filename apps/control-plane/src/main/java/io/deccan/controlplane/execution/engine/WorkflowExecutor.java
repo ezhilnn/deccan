@@ -69,6 +69,12 @@ public class WorkflowExecutor {
             WorkflowNode current =
         workflowGraph.findStartNode(
                 definition);
+                if(current == null){
+
+                        throw new IllegalStateException(
+                                "Workflow has no start node");
+
+                        }
 
         while (current != null) {
 
@@ -197,6 +203,12 @@ public class WorkflowExecutor {
                 "Workflow execution [{}] failed",
                 execution.getId(),
                 ex);
+
+                if(ex instanceof RuntimeException runtimeException){
+
+                throw runtimeException;
+
+                }
 
                 throw new RuntimeException(
                         ex);

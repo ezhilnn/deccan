@@ -116,4 +116,15 @@ public class ExecutionContext {
                 .orElse(null);
 
         }
+        public int nodeCount(){
+
+        return nodeOutputs.size();
+
+        }
+
+        public int variableCount(){
+
+        return variables.size();
+
+        }
 }

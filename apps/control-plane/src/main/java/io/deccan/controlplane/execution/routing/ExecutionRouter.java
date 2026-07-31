@@ -39,7 +39,18 @@ public class ExecutionRouter {
 
             default:
 
-                return candidates.get(0);
+                WorkflowNode next =
+                candidates.get(0);
+
+            if(next == current){
+
+                throw new IllegalStateException(
+                        "Workflow contains self-loop on node "
+                                + current.getId());
+
+            }
+
+            return next;
 
         }
 
