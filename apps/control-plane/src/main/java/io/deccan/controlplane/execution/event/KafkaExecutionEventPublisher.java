@@ -28,8 +28,9 @@ public class KafkaExecutionEventPublisher
                 event);
 
         log.info(
-                "Published execution event [{}]",
-                event.getType());
+        "Published [{}] execution={}",
+        event.getType(),
+        event.getExecutionId());
 
     }
 

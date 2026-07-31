@@ -23,5 +23,13 @@ public class ExecutionEvent {
     private String type;
 
     private OffsetDateTime timestamp;
+    
+    private String nodeId;
+
+    private String nodeType;
+
+    private String status;
+
+    private String message;
 
 }
