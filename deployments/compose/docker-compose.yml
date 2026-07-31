@@ -126,10 +126,12 @@ services:
     depends_on:
       - control-plane
       - kafka
+      - otel-collector
     environment:
       SERVER_PORT: 8187
       CONTROL_PLANE_URL: http://control-plane:8088/api
       WORKER_NAME: worker-01
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
     ports:
       - "8187:8187"
 
