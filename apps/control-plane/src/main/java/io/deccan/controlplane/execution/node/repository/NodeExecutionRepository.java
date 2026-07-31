@@ -6,11 +6,19 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.Optional;
 
 public interface NodeExecutionRepository
         extends JpaRepository<NodeExecution, UUID> {
 
     List<NodeExecution> findByWorkflowExecutionOrderByStartedAt(
             WorkflowExecution execution);
+        Optional<NodeExecution> findTopByWorkflowExecutionAndNodeIdOrderByStartedAtDesc(
+
+                WorkflowExecution execution,
+
+                String nodeId
+
+        );
 
 }

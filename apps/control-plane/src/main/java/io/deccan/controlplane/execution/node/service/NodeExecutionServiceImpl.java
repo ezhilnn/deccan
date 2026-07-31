@@ -8,16 +8,19 @@ import io.deccan.controlplane.execution.node.repository.NodeExecutionRepository;
 import io.deccan.controlplane.workflow.definition.node.WorkflowNode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
 
+@Transactional
 @Service
 @RequiredArgsConstructor
 public class NodeExecutionServiceImpl
         implements NodeExecutionService {
 
     private final NodeExecutionRepository repository;
+    
 
     private final ObjectMapper objectMapper;
 
@@ -89,5 +92,24 @@ public class NodeExecutionServiceImpl
         repository.save(nodeExecution);
 
     }
+        @Override
+        @Transactional(readOnly = true)
+        public NodeExecution findLatest(
+
+                WorkflowExecution execution,
+
+                String nodeId){
+
+        return repository
+
+                .findTopByWorkflowExecutionAndNodeIdOrderByStartedAtDesc(
+
+                        execution,
+
+                        nodeId)
+
+                .orElse(null);
+
+        }
 
 }

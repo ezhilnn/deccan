@@ -6,16 +6,19 @@ import io.deccan.controlplane.workflow.definition.node.WorkflowNode;
 
 public interface NodeExecutionService {
 
-    NodeExecution start(
-            WorkflowExecution execution,
-            WorkflowNode node);
+        NodeExecution start(
+                WorkflowExecution execution,
+                WorkflowNode node);
 
-    void complete(
-            NodeExecution nodeExecution,
-            Object output);
+        void complete(
+                NodeExecution nodeExecution,
+                Object output);
 
-    void fail(
-            NodeExecution nodeExecution,
-            String error);
+        void fail(
+                NodeExecution nodeExecution,
+                String error);
+        NodeExecution findLatest(
+                WorkflowExecution execution,
+                String nodeId);
 
 }
