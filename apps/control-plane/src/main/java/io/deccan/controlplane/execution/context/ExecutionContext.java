@@ -101,5 +101,19 @@ public class ExecutionContext {
                 variables.clear();
 
         }
+        public NodeResult getLastNodeOutput(){
 
+        if(nodeOutputs.isEmpty()){
+
+                return null;
+
+        }
+
+        return nodeOutputs
+                .values()
+                .stream()
+                .reduce((first, second) -> second)
+                .orElse(null);
+
+        }
 }

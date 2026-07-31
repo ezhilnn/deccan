@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.deccan.controlplane.execution.context.ExecutionContext;
+import io.deccan.controlplane.execution.context.model.NodeResult;
 import io.deccan.controlplane.execution.engine.node.NodeExecutor;
 import io.deccan.controlplane.execution.entity.WorkflowExecution;
 import io.deccan.controlplane.execution.event.ExecutionEventPublisher;
@@ -122,7 +123,20 @@ public class WorkflowExecutor {
         objectMapper.valueToTree(
                 context.getNodeOutputs())
 
-);
+        );
+        NodeResult result =
+        context.getLastNodeOutput();
+
+        if(result != null){
+
+        execution.setOutput(
+
+                objectMapper.valueToTree(
+                        result.getData())
+
+        );
+
+        }
        
                 executionStateMachine.complete(
                         execution);
