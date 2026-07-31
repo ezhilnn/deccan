@@ -17,21 +17,58 @@ public class ExecutionRouter {
 
             ExecutionContext context){
 
-        if(candidates.isEmpty()){
+        if(candidates == null || candidates.isEmpty()){
 
             return null;
 
         }
 
-        /*
-         * Temporary implementation.
-         *
-         * Later:
-         * - Condition nodes
-         * - Parallel nodes
-         * - Switch nodes
-         * - Loops
-         */
+        if(candidates.size() == 1){
+
+            return candidates.get(0);
+
+        }
+
+        switch(current.getType()){
+
+            case "condition":
+
+                return evaluateCondition(
+                        candidates,
+                        context);
+
+            default:
+
+                return candidates.get(0);
+
+        }
+
+    }
+    private WorkflowNode evaluateCondition(
+
+            List<WorkflowNode> candidates,
+
+            ExecutionContext context){
+
+        Object result =
+                context.getVariable(
+                        "condition");
+
+        if(result instanceof Boolean value){
+
+            if(value){
+
+                return candidates.get(0);
+
+            }
+
+            if(candidates.size() > 1){
+
+                return candidates.get(1);
+
+            }
+
+        }
 
         return candidates.get(0);
 
