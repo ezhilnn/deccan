@@ -33,12 +33,12 @@ public class ManualTriggerExecutor
                 node.getId());
 
 
-        context.getNodeOutputs().put(
-                node.getId(),
-                NodeResult.builder()
-                        .success(true)
-                        .data("Workflow triggered")
-                        .build());
+        context.putNodeOutput(
+        node.getId(),
+        NodeResult.builder()
+                .success(true)
+                .data("Workflow triggered")
+                .build());
 
     }
 

@@ -6,12 +6,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import io.deccan.controlplane.execution.context.ExecutionContext;
 import io.deccan.controlplane.execution.context.model.NodeResult;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class ResponseNodeExecutor
         implements NodeExecutor {
+    private final ObjectMapper objectMapper;
 
     @Override
     public boolean supports(
@@ -31,12 +35,23 @@ public class ResponseNodeExecutor
                 "Executing Response [{}]",
                 node.getId());
 
-        context.getNodeOutputs().put(
+        context.putNodeOutput(
         node.getId(),
         NodeResult.builder()
                 .success(true)
                 .data("Workflow completed")
                 .build());
+        // context.getExecution().setOutput(
+
+        //         objectMapper.valueToTree(
+
+        //                 context.getNodeOutput(
+        //                         node.getId())
+        //                         .getData()
+
+        //         )
+
+        // );
 
     }
 

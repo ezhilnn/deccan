@@ -123,7 +123,7 @@ public class WorkflowExecutor {
                 context.getNodeOutputs())
 
 );
-
+       
                 executionStateMachine.complete(
                         execution);
 
