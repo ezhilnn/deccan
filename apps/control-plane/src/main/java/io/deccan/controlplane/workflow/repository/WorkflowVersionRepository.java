@@ -1,12 +1,13 @@
 package io.deccan.controlplane.workflow.repository;
 
-import io.deccan.controlplane.workflow.entity.Workflow;
-import io.deccan.controlplane.workflow.entity.WorkflowVersion;
-import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import io.deccan.controlplane.workflow.entity.Workflow;
+import io.deccan.controlplane.workflow.entity.WorkflowVersion;
 
 public interface WorkflowVersionRepository
         extends JpaRepository<WorkflowVersion, UUID> {
@@ -23,5 +24,7 @@ public interface WorkflowVersionRepository
     Optional<WorkflowVersion> findFirstByWorkflowOrderByVersionDesc(
             Workflow workflow
     );
-
+    Optional<WorkflowVersion> findByWorkflowIdAndVersion(
+        UUID workflowId,
+        Integer version);
 }

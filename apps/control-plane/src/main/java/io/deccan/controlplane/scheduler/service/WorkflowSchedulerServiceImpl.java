@@ -1,29 +1,26 @@
 package io.deccan.controlplane.scheduler.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import io.deccan.controlplane.execution.entity.WorkflowExecution;
+import io.deccan.controlplane.execution.graph.ExecutionWorkflowGraph;
+import io.deccan.controlplane.execution.graph.WorkflowGraphService;
+import io.deccan.controlplane.execution.repository.WorkflowExecutionRepository;
 import io.deccan.controlplane.task.entity.ExecutionTask;
 import io.deccan.controlplane.task.enums.TaskStatus;
 import io.deccan.controlplane.task.repository.ExecutionTaskRepository;
-import io.deccan.controlplane.workflow.definition.WorkflowDefinition;
 import io.deccan.controlplane.workflow.definition.edge.WorkflowEdge;
 import io.deccan.controlplane.workflow.definition.node.WorkflowNode;
 import io.deccan.controlplane.workflow.entity.WorkflowVersion;
 import io.deccan.controlplane.workflow.repository.WorkflowVersionRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import io.deccan.controlplane.execution.graph.ExecutionWorkflowGraph;
-import io.deccan.controlplane.execution.graph.WorkflowGraphService;
-import io.deccan.controlplane.execution.repository.WorkflowExecutionRepository;
-import io.deccan.controlplane.workflow.definition.edge.WorkflowEdge;
-import io.deccan.controlplane.workflow.definition.node.WorkflowNode;
-
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.Map;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -104,10 +101,13 @@ public class WorkflowSchedulerServiceImpl
                 .orElseThrow();
 
         WorkflowVersion version =
-                workflowVersionRepository
-                        .findById(
-                                execution.getWorkflow().getId())
-                        .orElseThrow();
+        workflowVersionRepository
+                .findByWorkflowIdAndVersion(
+                        execution.getWorkflow().getId(),
+                        execution.getWorkflowVersion())
+                .orElseThrow(() ->
+                        new IllegalStateException(
+                                "Workflow version not found"));
 
         ExecutionWorkflowGraph graph =
                 workflowGraphService.buildGraph(
