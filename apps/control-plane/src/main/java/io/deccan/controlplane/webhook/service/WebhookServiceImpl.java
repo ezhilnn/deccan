@@ -133,5 +133,26 @@ public class WebhookServiceImpl
                                 "Webhook not found"));
 
     }
+    @Override
+    public void validateWebhook(
+            Webhook webhook,
+            String secret){
+
+        if(Boolean.FALSE.equals(
+                webhook.getEnabled())){
+
+            throw new IllegalStateException(
+                    "Webhook is disabled");
+
+        }
+
+        if(!webhook.getSecret().equals(secret)){
+
+            throw new IllegalArgumentException(
+                    "Invalid webhook secret");
+
+        }
+
+    }
 
 }

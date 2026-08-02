@@ -27,5 +27,8 @@ public interface WebhookService {
 
     Webhook findByEndpoint(
             String endpoint);
+    void validateWebhook(
+        Webhook webhook,
+        String secret);
 
 }

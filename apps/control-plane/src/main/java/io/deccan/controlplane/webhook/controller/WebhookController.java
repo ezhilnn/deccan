@@ -3,11 +3,14 @@ package io.deccan.controlplane.webhook.controller;
 import io.deccan.controlplane.common.response.ApiResponse;
 import io.deccan.controlplane.execution.dto.request.ExecutionRequest;
 import io.deccan.controlplane.execution.dto.response.ExecutionResponse;
+import io.deccan.controlplane.execution.entity.WorkflowExecution;
 import io.deccan.controlplane.execution.mapper.ExecutionMapper;
 import io.deccan.controlplane.execution.service.ExecutionService;
 import io.deccan.controlplane.webhook.dto.request.CreateWebhookRequest;
 import io.deccan.controlplane.webhook.dto.request.UpdateWebhookRequest;
+import io.deccan.controlplane.webhook.dto.request.WebhookTriggerRequest;
 import io.deccan.controlplane.webhook.dto.response.WebhookResponse;
+import io.deccan.controlplane.webhook.dto.response.WebhookTriggerResponse;
 import io.deccan.controlplane.webhook.entity.Webhook;
 import io.deccan.controlplane.webhook.mapper.WebhookMapper;
 import io.deccan.controlplane.webhook.service.WebhookService;
@@ -32,8 +35,8 @@ public class WebhookController {
 
     private final ExecutionMapper executionMapper;
 
-    @PreAuthorize("hasAuthority('workflow.write')")
     @PostMapping
+    @PreAuthorize("hasAuthority('workflow.write')")
     public ApiResponse<WebhookResponse> create(
 
             @Valid
@@ -46,14 +49,13 @@ public class WebhookController {
         return ApiResponse.<WebhookResponse>builder()
                 .status(201)
                 .message("Webhook created successfully")
-                .data(
-                        mapper.toResponse(webhook))
+                .data(mapper.toResponse(webhook))
                 .build();
 
     }
 
-    @PreAuthorize("hasAuthority('workflow.read')")
     @GetMapping("/{webhookId}")
+    @PreAuthorize("hasAuthority('workflow.read')")
     public ApiResponse<WebhookResponse> get(
 
             @PathVariable
@@ -69,8 +71,8 @@ public class WebhookController {
 
     }
 
-    @PreAuthorize("hasAuthority('workflow.read')")
     @GetMapping("/workflows/{workflowId}")
+    @PreAuthorize("hasAuthority('workflow.read')")
     public ApiResponse<List<WebhookResponse>> list(
 
             @PathVariable
@@ -90,8 +92,8 @@ public class WebhookController {
 
     }
 
-    @PreAuthorize("hasAuthority('workflow.write')")
     @PutMapping("/{webhookId}")
+    @PreAuthorize("hasAuthority('workflow.write')")
     public ApiResponse<WebhookResponse> update(
 
             @PathVariable
@@ -109,14 +111,13 @@ public class WebhookController {
         return ApiResponse.<WebhookResponse>builder()
                 .status(200)
                 .message("Webhook updated successfully")
-                .data(
-                        mapper.toResponse(webhook))
+                .data(mapper.toResponse(webhook))
                 .build();
 
     }
 
-    @PreAuthorize("hasAuthority('workflow.write')")
     @DeleteMapping("/{webhookId}")
+    @PreAuthorize("hasAuthority('workflow.write')")
     public ApiResponse<Void> delete(
 
             @PathVariable
@@ -131,37 +132,37 @@ public class WebhookController {
 
     }
 
-    @PostMapping("/{endpoint}")
-    public ApiResponse<ExecutionResponse> trigger(
+    @PostMapping("/{endpoint}/trigger")
+    public ApiResponse<WebhookTriggerResponse> trigger(
 
             @PathVariable
             String endpoint,
 
-            @RequestBody(required = false)
-            ExecutionRequest request) {
+            @RequestBody
+            WebhookTriggerRequest request) {
 
         Webhook webhook =
                 service.findByEndpoint(endpoint);
 
-        ExecutionResponse response =
-                executionMapper.toResponse(
+        service.validateWebhook(
+                webhook,
+                request.getSecret());
 
-                        executionService.executeWorkflow(
+        WorkflowExecution execution =
+                executionService.executeWorkflow(
+                        webhook.getWorkflow().getId(),
+                        request.getPayload());
 
-                                webhook.getWorkflow().getId(),
-
-                                request == null
-                                        ? null
-                                        : request.getInput()
-
-                        )
-
-                );
-
-        return ApiResponse.<ExecutionResponse>builder()
-                .status(201)
-                .message("Workflow triggered successfully")
-                .data(response)
+        return ApiResponse.<WebhookTriggerResponse>builder()
+                .status(202)
+                .message("Webhook accepted")
+                .data(
+                        WebhookTriggerResponse.builder()
+                                .accepted(true)
+                                .message(
+                                        "Workflow execution started. Execution Id: "
+                                                + execution.getId())
+                                .build())
                 .build();
 
     }
