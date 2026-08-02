@@ -17,5 +17,6 @@ public interface ArtifactService {
 
     String getObjectUrl(
             String objectName);
+    String getBucket();
 
 }

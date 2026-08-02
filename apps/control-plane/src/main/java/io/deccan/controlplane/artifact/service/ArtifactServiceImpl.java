@@ -170,6 +170,11 @@ public class ArtifactServiceImpl
 
     }
 
-}git add .
+    @Override
+    public String getBucket() {
 
-git commit -m "feat: implement artifact storage service"
+        return properties.getBucket();
+
+    }
+
+}
