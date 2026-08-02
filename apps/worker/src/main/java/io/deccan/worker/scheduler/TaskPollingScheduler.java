@@ -7,6 +7,7 @@ import io.deccan.worker.service.TaskPollingService;
 import lombok.RequiredArgsConstructor;
 
 @Component
+
 @RequiredArgsConstructor
 public class TaskPollingScheduler {
 
