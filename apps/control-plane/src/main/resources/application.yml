@@ -57,3 +57,5 @@ deccan:
       last-name: User
       email: admin@deccan.dev
       password: change-me
+    secret:
+      encryption-key: "1234567890123456"
