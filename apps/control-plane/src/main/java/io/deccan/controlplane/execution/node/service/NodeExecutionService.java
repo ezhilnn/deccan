@@ -20,5 +20,7 @@ public interface NodeExecutionService {
         NodeExecution findLatest(
                 WorkflowExecution execution,
                 String nodeId);
+        java.util.List<NodeExecution> findAll(
+        WorkflowExecution execution);
 
 }

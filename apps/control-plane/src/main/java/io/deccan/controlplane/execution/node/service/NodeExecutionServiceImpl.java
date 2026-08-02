@@ -124,5 +124,14 @@ public class NodeExecutionServiceImpl
                 .orElse(null);
 
         }
+        @Override
+        @Transactional(readOnly = true)
+        public java.util.List<NodeExecution> findAll(
+                WorkflowExecution execution) {
+
+        return repository.findByWorkflowExecutionOrderByStartedAt(
+                execution);
+
+        }
 
 }
