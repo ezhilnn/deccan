@@ -17,5 +17,7 @@ public interface WorkerService {
     Worker heartbeat(
         UUID workerId);
     Worker findAvailableWorker();
+    Worker shutdown(
+        UUID workerId);
 
 }

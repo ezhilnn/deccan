@@ -2,6 +2,7 @@ package io.deccan.controlplane.worker.controller;
 
 import io.deccan.controlplane.common.response.ApiResponse;
 import io.deccan.controlplane.worker.dto.request.RegisterWorkerRequest;
+import io.deccan.controlplane.worker.dto.request.WorkerShutdownRequest;
 import io.deccan.controlplane.worker.dto.response.WorkerResponse;
 import io.deccan.controlplane.worker.entity.Worker;
 import io.deccan.controlplane.worker.mapper.WorkerMapper;
@@ -99,5 +100,22 @@ public class WorkerController {
                 .build();
 
     }
+        @PostMapping("/{workerId}/shutdown")
+        public ApiResponse<Void> shutdown(
 
+                @PathVariable
+                UUID workerId,
+
+                @RequestBody
+                WorkerShutdownRequest request){
+
+        service.shutdown(
+                workerId);
+
+        return ApiResponse.<Void>builder()
+                .status(200)
+                .message("Worker shutdown acknowledged")
+                .build();
+
+        }
 }

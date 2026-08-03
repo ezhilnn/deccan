@@ -100,5 +100,24 @@ public class WorkerServiceImpl
                                 "No online worker available"));
 
     }
+    @Override
+        public Worker shutdown(
+                UUID workerId) {
+
+        Worker worker =
+                repository.findById(workerId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Worker not found"));
+
+        worker.setStatus(
+                WorkerStatus.OFFLINE);
+
+        worker.setLastHeartbeat(
+                Instant.now());
+
+        return repository.save(worker);
+
+        }
 
 }
