@@ -8,6 +8,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.deccan.controlplane.execution.entity.WorkflowExecution;
@@ -150,7 +151,8 @@ public class ExecutionTaskServiceImpl
     }
     @Override
     public void reportSuccess(
-            UUID taskId){
+        UUID taskId,
+        JsonNode output){
 
         ExecutionTask task =
                 taskRepository.findById(taskId)
@@ -160,6 +162,8 @@ public class ExecutionTaskServiceImpl
                 TaskStatus.COMPLETED);
         task.setCompletedAt(
         Instant.now());
+        task.setOutput(
+        output);
 
         task.setLeaseUntil(
                 null);

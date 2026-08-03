@@ -67,4 +67,8 @@ public class ExecutionTask extends BaseEntity {
     @Column(nullable = false)
     private Integer retryCount = 0;
 
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private JsonNode output;
+
 }

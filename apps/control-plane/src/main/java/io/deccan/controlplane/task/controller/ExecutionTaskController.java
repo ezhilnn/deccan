@@ -43,7 +43,8 @@ public class ExecutionTaskController {
         if(request.isSuccess()){
 
             service.reportSuccess(
-                    taskId);
+        taskId,
+        request.getOutput());
 
         }
         else{

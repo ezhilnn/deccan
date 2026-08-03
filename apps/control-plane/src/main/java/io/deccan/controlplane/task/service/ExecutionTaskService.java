@@ -5,6 +5,9 @@ import io.deccan.controlplane.task.entity.ExecutionTask;
 import io.deccan.controlplane.workflow.entity.WorkflowVersion;
 
 import java.util.UUID;
+
+import com.fasterxml.jackson.databind.JsonNode;
+
 import java.util.List;
 
 public interface ExecutionTaskService {
@@ -25,7 +28,8 @@ public interface ExecutionTaskService {
             String reason);
 
     void reportSuccess(
-        UUID taskId);
+        UUID taskId,
+        JsonNode output);
 
     void reportFailure(
             UUID taskId,

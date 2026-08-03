@@ -19,10 +19,14 @@ public class TaskResultServiceImpl
     private final AuthenticationService authenticationService;
 
     @Override
-    public void reportSuccess(UUID taskId) {
+    public void reportSuccess(
+        UUID taskId,
+        JsonNode output) {
 
         TaskResultRequest request = new TaskResultRequest();
         request.setSuccess(true);
+        request.setOutput(
+        output);
 
         String token = authenticationService.getToken();
 

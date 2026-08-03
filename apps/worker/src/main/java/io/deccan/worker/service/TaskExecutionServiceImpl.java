@@ -1,5 +1,7 @@
 package io.deccan.worker.service;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -26,30 +28,30 @@ public class TaskExecutionServiceImpl
     private final ConnectorExecutor connectorExecutor;
 
     private final TaskResultService taskResultService;
-    private final ExecutionContextHolder
-        contextHolder;
 
-    private final ObjectMapper
-            objectMapper;
-    private final RetryExecutor
-        retryExecutor;
-    private final TaskExecutor
-        taskExecutor;
-    private final WorkerMetricsService
-        metricsService;
-    private final WorkerMdcFilter
-        workerMdcFilter;
+    private final ExecutionContextHolder contextHolder;
+
+    private final ObjectMapper objectMapper;
+
+    private final RetryExecutor retryExecutor;
+
+    private final TaskExecutor taskExecutor;
+
+    private final WorkerMetricsService metricsService;
+
+    private final WorkerMdcFilter workerMdcFilter;
 
     @Override
     public void execute(
             ExecutionTaskResponse task) {
+
         long startTime =
-        System.currentTimeMillis();
+                System.currentTimeMillis();
 
         metricsService.taskStarted();
-        workerMdcFilter.initialize(
-        task);
-        
+
+        workerMdcFilter.initialize(task);
+
         contextHolder.clear();
 
         contextHolder
@@ -63,68 +65,92 @@ public class TaskExecutionServiceImpl
         log.info("Task Id   : {}", task.getId());
         log.info("Node Type : {}", task.getNodeType());
 
+        AtomicReference<ConnectorResult> connectorResult =
+                new AtomicReference<>();
+
         try {
 
             RetryPolicy retryPolicy =
-            RetryPolicy.builder()
-                    .maxAttempts(3)
-                    .initialDelay(1000)
-                    .multiplier(2.0)
-                    .maxDelay(10000)
-                    .build();
+                    RetryPolicy.builder()
+                            .maxAttempts(3)
+                            .initialDelay(1000)
+                            .multiplier(2.0)
+                            .maxDelay(10000)
+                            .build();
 
             RetryResult retryResult =
-                retryExecutor.execute(
-                        retryPolicy,
-                        () -> taskExecutor.execute(() -> {
+                    retryExecutor.execute(
+                            retryPolicy,
+                            () -> taskExecutor.execute(() -> {
 
-                            ConnectorResult result =
-                                    connectorExecutor.execute(task);
+                                ConnectorResult result =
+                                        connectorExecutor.execute(task);
 
-                            if (!result.isSuccess()) {
+                                connectorResult.set(result);
 
-                                throw new RuntimeException(
-                                        result.getErrorMessage());
+                                if (!result.isSuccess()) {
 
-                            }
+                                    throw new RuntimeException(
+                                            result.getErrorMessage());
 
-                        }));
+                                }
 
-            if(retryResult.isSuccess()){
+                                contextHolder
+                                        .get()
+                                        .put(
+                                                task.getNodeId(),
+                                                result.getOutput());
+
+                            }));
+
+            if (retryResult.isSuccess()) {
+
                 metricsService.taskSucceeded();
 
                 metricsService.connectorExecuted(
                         task.getNodeType());
 
                 taskResultService.reportSuccess(
-                        task.getId());
+                        task.getId(),
+                        connectorResult.get().getOutput());
 
             }
-            else{
+            else {
+
                 metricsService.taskFailed();
+
                 taskResultService.reportFailure(
-                        task.getId());
+                        task.getId(),
+                        retryResult.getException() != null
+                            ? retryResult.getException().getMessage()
+                            : "Task execution failed");
 
             }
 
         }
-        catch (Exception ex){
+        catch (Exception ex) {
+
             metricsService.taskTimedOut();
 
             taskResultService.reportFailure(
-                    task.getId());
+                    task.getId(),
+                    ex.getMessage());
 
             log.error(
                     "Task execution failed.",
                     ex);
 
         }
-        finally{
+        finally {
+
             metricsService.executionFinished(
-            System.currentTimeMillis()
-                    - startTime);
+                    System.currentTimeMillis()
+                            - startTime);
+
             workerMdcFilter.clear();
+
             contextHolder.clear();
+
         }
 
         log.info("----------------------------------------");
