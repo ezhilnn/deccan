@@ -44,6 +44,7 @@ public class TaskExecutionServiceImpl
     private final WorkerMdcFilter workerMdcFilter;
 
     private final ExecutionContextService executionContextService;
+    private final TaskHeartbeatService heartbeatService;
 
     @Override
     public void execute(
@@ -91,6 +92,8 @@ public class TaskExecutionServiceImpl
                 new AtomicReference<>();
 
         try {
+            heartbeatService.start(
+                task.getId());
 
             RetryPolicy retryPolicy =
                     RetryPolicy.builder()
@@ -168,6 +171,7 @@ public class TaskExecutionServiceImpl
             metricsService.executionFinished(
                     System.currentTimeMillis()
                             - startTime);
+            heartbeatService.stop();
 
             workerMdcFilter.clear();
 

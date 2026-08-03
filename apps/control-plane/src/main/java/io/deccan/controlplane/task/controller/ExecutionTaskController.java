@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.deccan.controlplane.common.response.ApiResponse;
+import io.deccan.controlplane.task.dto.request.TaskHeartbeatRequest;
 import io.deccan.controlplane.task.dto.request.TaskResultRequest;
 import io.deccan.controlplane.task.dto.response.ExecutionTaskResponse;
 import io.deccan.controlplane.task.entity.ExecutionTask;
@@ -20,6 +21,7 @@ import io.deccan.controlplane.task.mapper.ExecutionTaskMapper;
 import io.deccan.controlplane.task.service.ExecutionTaskService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
 
 @RestController
 @RequiredArgsConstructor
@@ -102,5 +104,30 @@ public class ExecutionTaskController {
         );
 
     }
+        @PostMapping("/{taskId}/heartbeat")
+        @PreAuthorize("hasAuthority('workflow.execute')")
+        public ApiResponse<Void> heartbeat(
+
+                @PathVariable
+                UUID taskId,
+
+                @RequestBody
+                TaskHeartbeatRequest request){
+
+        service.heartbeat(
+
+                taskId,
+
+                request.getExtendBySeconds());
+
+        return ApiResponse.<Void>builder()
+
+                .status(200)
+
+                .message("Heartbeat received")
+
+                .build();
+
+        }
 
 }

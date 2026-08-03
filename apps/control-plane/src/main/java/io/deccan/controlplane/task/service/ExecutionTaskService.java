@@ -37,4 +37,7 @@ public interface ExecutionTaskService {
     List<ExecutionTask> getTasks(
         UUID executionId);
     ExecutionTask leaseNextTask();
+    void heartbeat(
+        UUID taskId,
+        long extendBySeconds);
 }

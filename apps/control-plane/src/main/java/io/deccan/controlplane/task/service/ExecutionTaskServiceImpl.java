@@ -284,5 +284,32 @@ public class ExecutionTaskServiceImpl
                 worker.getId());
 
     }
+        @Override
+        public void heartbeat(
+                UUID taskId,
+                long extendBySeconds){
+
+        ExecutionTask task =
+                taskRepository.findById(taskId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Task not found"));
+
+        if(task.getStatus() != TaskStatus.LEASED){
+
+                throw new IllegalStateException(
+                        "Task is not currently leased");
+
+        }
+
+        task.setLeaseUntil(
+
+                Instant.now()
+                        .plusSeconds(
+                                extendBySeconds));
+
+        taskRepository.save(task);
+
+        }
 
 }
