@@ -1,5 +1,6 @@
 package io.deccan.controlplane.task.dto.request;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,5 +11,7 @@ public class TaskResultRequest {
     private boolean success;
 
     private String errorMessage;
+
+    private JsonNode output;
 
 }
