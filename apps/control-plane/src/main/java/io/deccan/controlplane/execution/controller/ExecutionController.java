@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import io.deccan.controlplane.execution.context.dto.response.ExecutionContextResponse;
 
 import java.util.List;
 import java.util.UUID;
@@ -136,6 +137,30 @@ public class ExecutionController {
                         .data(
                                 mapper.toResponse(
                                         execution))
+                        .build();
+
+        }
+        @PreAuthorize("hasAuthority('workflow.read')")
+        @GetMapping("/{executionId}/context")
+        public ApiResponse<ExecutionContextResponse> context(
+
+                @PathVariable
+                UUID executionId){
+
+                return ApiResponse
+
+                        .<ExecutionContextResponse>builder()
+
+                        .status(200)
+
+                        .message("Execution context fetched")
+
+                        .data(
+
+                                executionService.getExecutionContext(
+
+                                        executionId))
+
                         .build();
 
         }

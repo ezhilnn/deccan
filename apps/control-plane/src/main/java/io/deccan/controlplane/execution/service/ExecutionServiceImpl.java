@@ -9,6 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import io.deccan.controlplane.execution.context.mapper.ExecutionContextMapper;
+import io.deccan.controlplane.execution.context.service.ExecutionContextService;
 import io.deccan.controlplane.execution.engine.WorkflowExecutor;
 import io.deccan.controlplane.execution.entity.WorkflowExecution;
 import io.deccan.controlplane.execution.enums.ExecutionStatus;
@@ -26,6 +28,9 @@ import io.deccan.controlplane.workflow.repository.WorkflowRepository;
 import io.deccan.controlplane.workflow.repository.WorkflowVersionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import io.deccan.controlplane.execution.context.dto.response.ExecutionContextResponse;
+import io.deccan.controlplane.execution.context.mapper.ExecutionContextMapper;
+import io.deccan.controlplane.execution.context.service.ExecutionContextService;
 
 @Service
 @Slf4j
@@ -46,6 +51,9 @@ public class ExecutionServiceImpl
     private final ExecutionTaskService executionTaskService;
     private final WorkflowSchedulerService workflowSchedulerService;
     private final WorkflowExecutor workflowExecutor;
+    private final ExecutionContextService executionContextService;
+
+    private final ExecutionContextMapper executionContextMapper;
 
     @Override
     public WorkflowExecution executeWorkflow(
@@ -322,6 +330,31 @@ public class ExecutionServiceImpl
                         previous.getInput()
 
                 );
+
+        }
+        @Override
+        @Transactional(readOnly = true)
+        public ExecutionContextResponse getExecutionContext(
+
+                UUID executionId){
+
+        WorkflowExecution execution =
+
+                executionRepository.findById(
+
+                        executionId)
+
+                .orElseThrow(() ->
+
+                        new IllegalArgumentException(
+
+                                "Execution not found"));
+
+        return executionContextMapper.toResponse(
+
+                executionContextService.getContext(
+
+                        execution));
 
         }
         
