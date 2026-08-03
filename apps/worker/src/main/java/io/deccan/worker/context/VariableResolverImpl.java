@@ -95,5 +95,97 @@ public class VariableResolverImpl
         return current;
 
     }
+    @Override
+public boolean evaluate(
+        String expression){
 
+    if(expression == null){
+
+        return false;
+
+    }
+
+    expression = expression.trim();
+
+    expression = resolve(
+            expression);
+
+    if(expression.contains("==")){
+
+        String[] p =
+                expression.split("==",2);
+
+        return p[0].trim()
+                .equals(
+                        p[1].trim());
+
+    }
+
+    if(expression.contains("!=")){
+
+        String[] p =
+                expression.split("!=",2);
+
+        return !p[0].trim()
+                .equals(
+                        p[1].trim());
+
+    }
+
+    if(expression.contains(">=")){
+
+        String[] p =
+                expression.split(">=",2);
+
+        return Double.parseDouble(
+                p[0].trim())
+                >=
+                Double.parseDouble(
+                        p[1].trim());
+
+    }
+
+    if(expression.contains("<=")){
+
+        String[] p =
+                expression.split("<=",2);
+
+        return Double.parseDouble(
+                p[0].trim())
+                <=
+                Double.parseDouble(
+                        p[1].trim());
+
+    }
+
+    if(expression.contains(">")){
+
+        String[] p =
+                expression.split(">",2);
+
+        return Double.parseDouble(
+                p[0].trim())
+                >
+                Double.parseDouble(
+                        p[1].trim());
+
+    }
+
+    if(expression.contains("<")){
+
+        String[] p =
+                expression.split("<",2);
+
+        return Double.parseDouble(
+                p[0].trim())
+                <
+                Double.parseDouble(
+                        p[1].trim());
+
+    }
+
+    return Boolean.parseBoolean(
+            expression);
+
+}
 }
