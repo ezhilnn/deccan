@@ -19,5 +19,6 @@ public interface WorkerRepository
             WorkerStatus status);
     List<Worker> findByStatusOrderByLastHeartbeatDesc(
         WorkerStatus status);
+    
 
 }

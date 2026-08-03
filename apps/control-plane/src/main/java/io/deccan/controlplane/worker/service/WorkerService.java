@@ -19,5 +19,6 @@ public interface WorkerService {
     Worker findAvailableWorker();
     Worker shutdown(
         UUID workerId);
+    int markOfflineWorkers();
 
 }

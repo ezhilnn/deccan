@@ -119,5 +119,40 @@ public class WorkerServiceImpl
         return repository.save(worker);
 
         }
+        @Override
+        public int markOfflineWorkers() {
+
+        Instant cutoff =
+                Instant.now()
+                        .minusSeconds(90);
+
+        List<Worker> workers =
+                repository.findByStatus(
+                        WorkerStatus.ONLINE);
+
+        int updated = 0;
+
+        for (Worker worker : workers) {
+
+                if (worker.getLastHeartbeat() == null) {
+                continue;
+                }
+
+                if (worker.getLastHeartbeat().isBefore(cutoff)) {
+
+                worker.setStatus(
+                        WorkerStatus.OFFLINE);
+
+                repository.save(worker);
+
+                updated++;
+
+                }
+
+        }
+
+        return updated;
+
+        }
 
 }
