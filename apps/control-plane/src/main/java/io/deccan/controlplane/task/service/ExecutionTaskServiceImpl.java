@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.deccan.controlplane.execution.context.service.ExecutionContextService;
 import io.deccan.controlplane.execution.entity.WorkflowExecution;
 import io.deccan.controlplane.execution.enums.ExecutionStatus;
 import io.deccan.controlplane.execution.repository.WorkflowExecutionRepository;
@@ -45,6 +46,7 @@ public class ExecutionTaskServiceImpl
 
     private final WorkflowExecutionRepository executionRepository;
     private final WorkflowSchedulerService workflowSchedulerService;
+    private final ExecutionContextService executionContextService;
 
     @Override
     public List<ExecutionTask> createTasks(
@@ -149,10 +151,10 @@ public class ExecutionTaskServiceImpl
         taskRepository.save(task);
 
     }
-    @Override
-    public void reportSuccess(
-        UUID taskId,
-        JsonNode output){
+   @Override
+        public void reportSuccess(
+                UUID taskId,
+                JsonNode output){
 
         ExecutionTask task =
                 taskRepository.findById(taskId)
@@ -160,18 +162,26 @@ public class ExecutionTaskServiceImpl
 
         task.setStatus(
                 TaskStatus.COMPLETED);
+
         task.setCompletedAt(
-        Instant.now());
-        task.setOutput(
-        output);
+                Instant.now());
 
-        task.setLeaseUntil(
-                null);
-
+        task.setLeaseUntil(null);
 
         taskRepository.save(task);
+
+        executionContextService.saveNodeOutput(
+
+                task.getExecution(),
+
+                task.getNodeId(),
+
+                output
+
+        );
+
         workflowSchedulerService.scheduleNextTasks(
-        task);
+                task);
 
         if(taskRepository.countByExecutionIdAndStatusNot(
 
@@ -181,27 +191,31 @@ public class ExecutionTaskServiceImpl
 
         ) == 0){
 
-            WorkflowExecution execution =
-                    task.getExecution();
+                WorkflowExecution execution =
+                        task.getExecution();
 
-            execution.setStatus(
-                    ExecutionStatus.COMPLETED);
-            executionRepository.save(
-                execution);
+                execution.setStatus(
+                        ExecutionStatus.COMPLETED);
+
+                executionRepository.save(
+                        execution);
 
         }
+
         Worker worker =
-        task.getWorker();
+                task.getWorker();
 
         if(worker != null){
 
-            worker.setStatus(
-                    WorkerStatus.ONLINE);
-            workerRepository.save(worker);
+                worker.setStatus(
+                        WorkerStatus.ONLINE);
+
+                workerRepository.save(
+                        worker);
 
         }
 
-    }
+        }
     @Override
     public void reportFailure(
             UUID taskId,
