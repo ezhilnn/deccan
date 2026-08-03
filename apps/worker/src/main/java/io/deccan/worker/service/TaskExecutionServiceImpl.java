@@ -18,6 +18,8 @@ import io.deccan.worker.retry.RetryPolicy;
 import io.deccan.worker.retry.RetryResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import io.deccan.worker.context.dto.response.ExecutionContextResponse;
+import io.deccan.worker.context.service.ExecutionContextService;
 
 @Slf4j
 @Service
@@ -41,6 +43,8 @@ public class TaskExecutionServiceImpl
 
     private final WorkerMdcFilter workerMdcFilter;
 
+    private final ExecutionContextService executionContextService;
+
     @Override
     public void execute(
             ExecutionTaskResponse task) {
@@ -53,6 +57,24 @@ public class TaskExecutionServiceImpl
         workerMdcFilter.initialize(task);
 
         contextHolder.clear();
+        ExecutionContextResponse context =
+
+        executionContextService.getContext(
+                task.getExecutionId());
+
+        if (context != null &&
+                context.getNodeOutputs() != null) {
+
+            context.getNodeOutputs()
+                    .forEach(
+                            (nodeId, output) ->
+                                    contextHolder
+                                            .get()
+                                            .put(
+                                                    nodeId,
+                                                    output));
+
+        }
 
         contextHolder
                 .get()
