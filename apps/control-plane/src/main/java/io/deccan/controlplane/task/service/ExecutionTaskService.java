@@ -43,4 +43,6 @@ public interface ExecutionTaskService {
     List<ExecutionTask> recoverExpiredLeases();
     void cancelTasks(
         UUID executionId);
+        ExecutionTask getTask(
+        UUID taskId);
 }

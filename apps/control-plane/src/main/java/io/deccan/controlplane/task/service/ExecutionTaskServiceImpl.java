@@ -388,5 +388,15 @@ public void cancelTasks(
     taskRepository.saveAll(tasks);
 
 }
+@Override
+@Transactional(readOnly = true)
+public ExecutionTask getTask(
+        UUID taskId){
 
+    return taskRepository.findById(taskId)
+            .orElseThrow(() ->
+                    new IllegalArgumentException(
+                            "Task not found"));
+
+}
 }

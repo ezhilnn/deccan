@@ -72,6 +72,8 @@ public interface ExecutionTaskRepository
             List<TaskStatus> statuses
 
     );
+    Optional<ExecutionTask> findById(
+        UUID id);
 
 
 

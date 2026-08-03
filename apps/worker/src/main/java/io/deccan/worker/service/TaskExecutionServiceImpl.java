@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import io.deccan.worker.context.dto.response.ExecutionContextResponse;
 import io.deccan.worker.context.service.ExecutionContextService;
+import io.deccan.worker.task.TaskStatusService;
 
 @Slf4j
 @Service
@@ -45,6 +46,7 @@ public class TaskExecutionServiceImpl
 
     private final ExecutionContextService executionContextService;
     private final TaskHeartbeatService heartbeatService;
+    private final TaskStatusService taskStatusService;
 
     @Override
     public void execute(
@@ -110,6 +112,17 @@ public class TaskExecutionServiceImpl
 
                                 ConnectorResult result =
                                         connectorExecutor.execute(task);
+                                ExecutionTaskResponse latestTask =
+
+                                                taskStatusService.getTask(
+                                                        task.getId());
+
+                                        if (latestTask.getStatus().name().equals("CANCELLED")) {
+
+                                        throw new IllegalStateException(
+                                                "Task cancelled during execution");
+
+                                        }
 
                                 connectorResult.set(result);
 

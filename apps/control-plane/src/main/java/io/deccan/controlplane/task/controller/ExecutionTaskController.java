@@ -129,5 +129,21 @@ public class ExecutionTaskController {
                 .build();
 
         }
+        @GetMapping("/{taskId}")
+                @PreAuthorize("hasAuthority('workflow.read')")
+                public ApiResponse<ExecutionTaskResponse> getTask(
+
+                        @PathVariable
+                        UUID taskId){
+
+                return ApiResponse.<ExecutionTaskResponse>builder()
+                        .status(200)
+                        .message("Task fetched")
+                        .data(
+                                mapper.toResponse(
+                                        service.getTask(taskId)))
+                        .build();
+
+                }
 
 }
