@@ -311,5 +311,35 @@ public class ExecutionTaskServiceImpl
         taskRepository.save(task);
 
         }
+        @Override
+        public List<ExecutionTask> recoverExpiredLeases() {
+
+        List<ExecutionTask> expired =
+
+                taskRepository.findByStatusAndLeaseUntilBefore(
+
+                        TaskStatus.LEASED,
+
+                        Instant.now());
+
+        for (ExecutionTask task : expired) {
+
+                task.setStatus(
+                        TaskStatus.READY);
+
+                task.setWorker(null);
+
+                task.setLeaseUntil(null);
+
+                task.setLeasedAt(null);
+
+                task.setRetryCount(
+                        task.getRetryCount() + 1);
+
+        }
+
+        return taskRepository.saveAll(expired);
+
+        }
 
 }

@@ -40,4 +40,5 @@ public interface ExecutionTaskService {
     void heartbeat(
         UUID taskId,
         long extendBySeconds);
+    List<ExecutionTask> recoverExpiredLeases();
 }
