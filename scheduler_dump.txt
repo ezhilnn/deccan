@@ -1,0 +1,979 @@
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\scheduler\bootstrap\WorkflowScheduleBootstrap.java
+====================================================================================================
+
+package io.deccan.controlplane.scheduler.bootstrap;
+
+import io.deccan.controlplane.scheduler.engine.WorkflowScheduler;
+import io.deccan.controlplane.scheduler.entity.WorkflowSchedule;
+import io.deccan.controlplane.scheduler.enums.ScheduleType;
+import io.deccan.controlplane.scheduler.repository.WorkflowScheduleRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.stereotype.Component;
+
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class WorkflowScheduleBootstrap
+        implements CommandLineRunner {
+
+    private final WorkflowScheduleRepository repository;
+
+    private final WorkflowScheduler scheduler;
+
+    @Override
+    public void run(String... args) {
+
+        repository.findByEnabledTrue()
+
+                .stream()
+
+                .filter(schedule ->
+                        schedule.getType() ==
+                                ScheduleType.CRON)
+
+                .forEach(schedule -> {
+
+                    scheduler.register(schedule);
+
+                    log.info(
+                            "Registered schedule [{}]",
+                            schedule.getId());
+
+                });
+
+    }
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\scheduler\config\SchedulerConfiguration.java
+====================================================================================================
+
+package io.deccan.controlplane.scheduler.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+
+@Configuration
+@EnableScheduling
+public class SchedulerConfiguration {
+
+    @Bean
+    public TaskScheduler taskScheduler() {
+
+        ThreadPoolTaskScheduler scheduler =
+                new ThreadPoolTaskScheduler();
+
+        scheduler.setPoolSize(10);
+
+        scheduler.setThreadNamePrefix(
+                "deccan-scheduler-");
+
+        scheduler.initialize();
+
+        return scheduler;
+
+    }
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\scheduler\controller\WorkflowScheduleController.java
+====================================================================================================
+
+package io.deccan.controlplane.scheduler.controller;
+
+import io.deccan.controlplane.common.response.ApiResponse;
+import io.deccan.controlplane.scheduler.dto.request.CreateScheduleRequest;
+import io.deccan.controlplane.scheduler.dto.response.WorkflowScheduleResponse;
+import io.deccan.controlplane.scheduler.entity.WorkflowSchedule;
+import io.deccan.controlplane.scheduler.mapper.WorkflowScheduleMapper;
+import io.deccan.controlplane.scheduler.service.WorkflowScheduleService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
+
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/workflows/{workflowId}/schedules")
+public class WorkflowScheduleController {
+
+    private final WorkflowScheduleService service;
+
+    private final WorkflowScheduleMapper mapper;
+
+    @PostMapping
+    @PreAuthorize("hasAuthority('workflow.update')")
+    public ApiResponse<WorkflowScheduleResponse> create(
+
+            @PathVariable
+            UUID workflowId,
+
+            @Valid
+            @RequestBody
+            CreateScheduleRequest request) {
+
+        WorkflowSchedule schedule =
+                service.createSchedule(
+                        workflowId,
+                        mapper.toEntity(request));
+
+        return ApiResponse.<WorkflowScheduleResponse>builder()
+                .status(201)
+                .message("Schedule created successfully")
+                .data(
+                        mapper.toResponse(schedule))
+                .build();
+
+    }
+
+    @GetMapping
+    @PreAuthorize("hasAuthority('workflow.read')")
+    public ApiResponse<List<WorkflowScheduleResponse>> list(
+
+            @PathVariable
+            UUID workflowId) {
+
+        List<WorkflowScheduleResponse> response =
+                service.getSchedules(workflowId)
+                        .stream()
+                        .map(mapper::toResponse)
+                        .toList();
+
+        return ApiResponse.<List<WorkflowScheduleResponse>>builder()
+                .status(200)
+                .message("Schedules fetched successfully")
+                .data(response)
+                .build();
+
+    }
+    @PostMapping("/{scheduleId}/enable")
+    @PreAuthorize("hasAuthority('workflow.update')")
+    public ApiResponse<Void> enable(
+
+            @PathVariable
+            UUID workflowId,
+
+            @PathVariable
+            UUID scheduleId) {
+
+        service.enableSchedule(
+                scheduleId);
+
+        return ApiResponse.<Void>builder()
+                .status(200)
+                .message("Schedule enabled successfully")
+                .build();
+
+    }
+    @PostMapping("/{scheduleId}/disable")
+    @PreAuthorize("hasAuthority('workflow.update')")
+    public ApiResponse<Void> disable(
+
+            @PathVariable
+            UUID workflowId,
+
+            @PathVariable
+            UUID scheduleId) {
+
+        service.disableSchedule(
+                scheduleId);
+
+        return ApiResponse.<Void>builder()
+                .status(200)
+                .message("Schedule disabled successfully")
+                .build();
+
+    }
+    @PutMapping("/{scheduleId}")
+    @PreAuthorize("hasAuthority('workflow.update')")
+    public ApiResponse<WorkflowScheduleResponse> update(
+
+            @PathVariable
+            UUID workflowId,
+
+            @PathVariable
+            UUID scheduleId,
+
+            @Valid
+            @RequestBody
+            CreateScheduleRequest request){
+
+        WorkflowSchedule schedule =
+                service.updateSchedule(
+                        scheduleId,
+                        mapper.toEntity(request));
+
+        return ApiResponse.<WorkflowScheduleResponse>builder()
+                .status(200)
+                .message("Schedule updated successfully")
+                .data(
+                        mapper.toResponse(schedule))
+                .build();
+
+    }
+    @DeleteMapping("/{scheduleId}")
+    @PreAuthorize("hasAuthority('workflow.update')")
+    public ApiResponse<Void> delete(
+
+            @PathVariable
+            UUID workflowId,
+
+            @PathVariable
+            UUID scheduleId){
+
+        service.deleteSchedule(
+                scheduleId);
+
+        return ApiResponse.<Void>builder()
+                .status(200)
+                .message("Schedule deleted successfully")
+                .build();
+
+    }
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\scheduler\dto\request\CreateScheduleRequest.java
+====================================================================================================
+
+package io.deccan.controlplane.scheduler.dto.request;
+
+import io.deccan.controlplane.scheduler.enums.ScheduleType;
+import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+public class CreateScheduleRequest {
+
+    @NotNull
+    private ScheduleType type;
+
+    private String cronExpression;
+
+    private Boolean enabled = true;
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\scheduler\dto\response\WorkflowScheduleResponse.java
+====================================================================================================
+
+package io.deccan.controlplane.scheduler.dto.response;
+
+import io.deccan.controlplane.scheduler.enums.ScheduleType;
+import lombok.Builder;
+import lombok.Getter;
+
+import java.time.Instant;
+import java.util.UUID;
+
+@Getter
+@Builder
+public class WorkflowScheduleResponse {
+
+    private UUID id;
+
+    private UUID workflowId;
+
+    private ScheduleType type;
+
+    private String cronExpression;
+
+    private Boolean enabled;
+
+    private Instant createdAt;
+
+    private Instant updatedAt;
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\scheduler\engine\WorkflowScheduler.java
+====================================================================================================
+
+package io.deccan.controlplane.scheduler.engine;
+
+import io.deccan.controlplane.execution.service.ExecutionService;
+import io.deccan.controlplane.scheduler.entity.WorkflowSchedule;
+import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.support.CronTrigger;
+import org.springframework.stereotype.Component;
+
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledFuture;
+
+@Component
+@RequiredArgsConstructor
+public class WorkflowScheduler {
+
+    private final TaskScheduler taskScheduler;
+
+    private final ExecutionService executionService;
+
+    private final Map<UUID, ScheduledFuture<?>> schedules =
+            new ConcurrentHashMap<>();
+
+    public void register(
+            WorkflowSchedule schedule) {
+        
+        if (schedules.containsKey(
+                schedule.getId())) {
+
+            unregister(
+                    schedule.getId());
+
+        }
+
+        ScheduledFuture<?> future =
+                taskScheduler.schedule(
+
+                        () -> executionService.executeWorkflow(
+                                schedule.getWorkflow().getId(),
+                                null),
+
+                        new CronTrigger(
+                                schedule.getCronExpression())
+
+                );
+
+        schedules.put(
+                schedule.getId(),
+                future);
+
+    }
+
+    public void unregister(
+            UUID scheduleId) {
+
+        ScheduledFuture<?> future =
+                schedules.remove(scheduleId);
+
+        if (future != null) {
+
+            future.cancel(false);
+
+        }
+
+    }
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\scheduler\entity\WorkflowSchedule.java
+====================================================================================================
+
+package io.deccan.controlplane.scheduler.entity;
+
+import io.deccan.controlplane.common.entity.BaseEntity;
+import io.deccan.controlplane.scheduler.enums.ScheduleType;
+import io.deccan.controlplane.workflow.entity.Workflow;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+@Entity
+@Table(name = "workflow_schedules")
+public class WorkflowSchedule extends BaseEntity {
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "workflow_id", nullable = false)
+    private Workflow workflow;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ScheduleType type;
+
+    @Column(name = "cron_expression")
+    private String cronExpression;
+
+    @Column(nullable = false)
+    private Boolean enabled = true;
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\scheduler\enums\ScheduleType.java
+====================================================================================================
+
+package io.deccan.controlplane.scheduler.enums;
+
+public enum ScheduleType {
+
+    MANUAL,
+
+    CRON
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\scheduler\mapper\WorkflowScheduleMapper.java
+====================================================================================================
+
+package io.deccan.controlplane.scheduler.mapper;
+
+import io.deccan.controlplane.scheduler.dto.request.CreateScheduleRequest;
+import io.deccan.controlplane.scheduler.dto.response.WorkflowScheduleResponse;
+import io.deccan.controlplane.scheduler.entity.WorkflowSchedule;
+import org.springframework.stereotype.Component;
+
+@Component
+public class WorkflowScheduleMapper {
+
+    public WorkflowSchedule toEntity(
+            CreateScheduleRequest request) {
+
+        WorkflowSchedule schedule =
+                new WorkflowSchedule();
+
+        schedule.setType(
+                request.getType());
+
+        schedule.setCronExpression(
+                request.getCronExpression());
+
+        schedule.setEnabled(
+                request.getEnabled());
+
+        return schedule;
+
+    }
+
+    public WorkflowScheduleResponse toResponse(
+            WorkflowSchedule schedule) {
+
+        return WorkflowScheduleResponse.builder()
+                .id(schedule.getId())
+                .workflowId(
+                        schedule.getWorkflow().getId())
+                .type(schedule.getType())
+                .cronExpression(
+                        schedule.getCronExpression())
+                .enabled(schedule.getEnabled())
+                .createdAt(
+                        schedule.getCreatedAt())
+                .updatedAt(
+                        schedule.getUpdatedAt())
+                .build();
+
+    }
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\scheduler\repository\WorkflowScheduleRepository.java
+====================================================================================================
+
+package io.deccan.controlplane.scheduler.repository;
+
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import io.deccan.controlplane.scheduler.entity.WorkflowSchedule;
+import io.deccan.controlplane.workflow.entity.Workflow;
+
+public interface WorkflowScheduleRepository
+        extends JpaRepository<WorkflowSchedule, UUID> {
+
+    List<WorkflowSchedule> findByWorkflow(
+            Workflow workflow);
+    List<WorkflowSchedule> findByEnabledTrue();
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\scheduler\service\SchedulerService.java
+====================================================================================================
+
+package io.deccan.controlplane.scheduler.service;
+
+import io.deccan.controlplane.execution.entity.WorkflowExecution;
+import io.deccan.controlplane.workflow.entity.WorkflowVersion;
+
+public interface SchedulerService {
+
+    void initializeWorkflow(
+            WorkflowExecution execution,
+            WorkflowVersion version);
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\scheduler\service\SchedulerServiceImpl.java
+====================================================================================================
+
+package io.deccan.controlplane.scheduler.service;
+
+import io.deccan.controlplane.execution.entity.WorkflowExecution;
+import io.deccan.controlplane.workflow.entity.WorkflowVersion;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+@Service
+@RequiredArgsConstructor
+public class SchedulerServiceImpl
+        implements SchedulerService {
+
+    @Override
+    public void initializeWorkflow(
+            WorkflowExecution execution,
+            WorkflowVersion version) {
+
+        // Milestone 13.3
+
+    }
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\scheduler\service\WorkflowSchedulerService.java
+====================================================================================================
+
+package io.deccan.controlplane.scheduler.service;
+
+import io.deccan.controlplane.execution.entity.WorkflowExecution;
+import io.deccan.controlplane.task.entity.ExecutionTask;
+import io.deccan.controlplane.workflow.entity.WorkflowVersion;
+
+public interface WorkflowSchedulerService {
+
+    void initializeWorkflow(
+            WorkflowExecution execution,
+            WorkflowVersion version);
+    void scheduleNextTasks(
+        ExecutionTask completedTask);
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\scheduler\service\WorkflowSchedulerServiceImpl.java
+====================================================================================================
+
+package io.deccan.controlplane.scheduler.service;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import io.deccan.controlplane.execution.entity.WorkflowExecution;
+import io.deccan.controlplane.execution.graph.ExecutionWorkflowGraph;
+import io.deccan.controlplane.execution.graph.WorkflowGraphService;
+import io.deccan.controlplane.execution.repository.WorkflowExecutionRepository;
+import io.deccan.controlplane.task.entity.ExecutionTask;
+import io.deccan.controlplane.task.enums.TaskStatus;
+import io.deccan.controlplane.task.repository.ExecutionTaskRepository;
+import io.deccan.controlplane.workflow.definition.edge.WorkflowEdge;
+import io.deccan.controlplane.workflow.definition.node.WorkflowNode;
+import io.deccan.controlplane.workflow.entity.WorkflowVersion;
+import io.deccan.controlplane.workflow.repository.WorkflowVersionRepository;
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class WorkflowSchedulerServiceImpl
+        implements WorkflowSchedulerService {
+
+    private final WorkflowGraphService workflowGraphService;
+
+    private final ExecutionTaskRepository
+            taskRepository;
+    private final WorkflowExecutionRepository executionRepository;
+
+    private final WorkflowVersionRepository workflowVersionRepository;
+
+
+    @Override
+    public void initializeWorkflow(
+            WorkflowExecution execution,
+            WorkflowVersion version) {
+
+        try {
+
+            ExecutionWorkflowGraph graph =
+            workflowGraphService.buildGraph(
+                    version);
+
+            Set<String> targetNodes =
+                    new HashSet<>();
+
+           for (var edges : graph.getIncomingEdges().values()) {
+
+            for (WorkflowEdge edge : edges) {
+
+                targetNodes.add(
+                        edge.getTarget());
+
+            }
+
+        }
+
+            for (WorkflowNode node :  graph.getNodes().values()) {
+
+                if (targetNodes.contains(node.getId())) {
+                    continue;
+                }
+
+                ExecutionTask task =
+                        taskRepository
+                                .findByExecutionIdAndNodeId(
+                                        execution.getId(),
+                                        node.getId())
+                                .orElseThrow();
+
+                task.setStatus(
+                        TaskStatus.READY);
+
+                taskRepository.save(task);
+
+            }
+
+        } catch (Exception ex) {
+
+            throw new IllegalStateException(
+                    "Unable to initialize workflow",
+                    ex);
+
+        }
+
+    }
+    
+    @Override
+    public void scheduleNextTasks(
+            ExecutionTask completedTask) {
+
+        WorkflowExecution execution =
+                executionRepository.findById(
+                        completedTask.getExecution().getId())
+                .orElseThrow();
+
+        WorkflowVersion version =
+        workflowVersionRepository
+                .findByWorkflowIdAndVersion(
+                        execution.getWorkflow().getId(),
+                        execution.getWorkflowVersion())
+                .orElseThrow(() ->
+                        new IllegalStateException(
+                                "Workflow version not found"));
+
+        ExecutionWorkflowGraph graph =
+                workflowGraphService.buildGraph(
+                        version);
+
+        List<ExecutionTask> tasks =
+                taskRepository.findByExecutionId(
+                        execution.getId());
+
+        Map<String, ExecutionTask> taskMap =
+                tasks.stream()
+                        .collect(Collectors.toMap(
+                                ExecutionTask::getNodeId,
+                                t -> t));
+
+        List<WorkflowEdge> outgoing =
+                graph.getOutgoingEdges()
+                        .getOrDefault(
+                                completedTask.getNodeId(),
+                                List.of());
+
+        for (WorkflowEdge edge : outgoing) {
+
+            String childNodeId =
+                    edge.getTarget();
+
+            ExecutionTask childTask =
+                    taskMap.get(childNodeId);
+
+            boolean ready = true;
+
+            List<WorkflowEdge> incoming =
+                    graph.getIncomingEdges()
+                            .getOrDefault(
+                                    childNodeId,
+                                    List.of());
+
+            for (WorkflowEdge parentEdge : incoming) {
+
+                ExecutionTask parent =
+                        taskMap.get(
+                                parentEdge.getSource());
+
+                if (parent.getStatus()
+                        != TaskStatus.COMPLETED) {
+
+                    ready = false;
+                    break;
+
+                }
+
+            }
+
+            if (ready &&
+                    childTask.getStatus()
+                            == TaskStatus.PENDING) {
+
+                childTask.setStatus(
+                        TaskStatus.READY);
+
+                taskRepository.save(
+                        childTask);
+
+            }
+
+        }
+
+    }
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\scheduler\service\WorkflowScheduleService.java
+====================================================================================================
+
+package io.deccan.controlplane.scheduler.service;
+
+import java.util.List;
+import java.util.UUID;
+
+import io.deccan.controlplane.scheduler.entity.WorkflowSchedule;
+
+public interface WorkflowScheduleService {
+
+    WorkflowSchedule createSchedule(
+            UUID workflowId,
+            WorkflowSchedule schedule);
+
+    List<WorkflowSchedule> getSchedules(
+            UUID workflowId);
+    void enableSchedule(
+        UUID scheduleId);
+
+    void disableSchedule(
+            UUID scheduleId);
+    WorkflowSchedule updateSchedule(
+        UUID scheduleId,
+        WorkflowSchedule schedule);
+
+    void deleteSchedule(
+            UUID scheduleId);
+
+}
+
+
+====================================================================================================
+FILE: E:\projects\deccan\apps\control-plane\src\main\java\io\deccan\controlplane\scheduler\service\WorkflowScheduleServiceImpl.java
+====================================================================================================
+
+package io.deccan.controlplane.scheduler.service;
+
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import io.deccan.controlplane.scheduler.engine.WorkflowScheduler;
+import io.deccan.controlplane.scheduler.entity.WorkflowSchedule;
+import io.deccan.controlplane.scheduler.enums.ScheduleType;
+import io.deccan.controlplane.scheduler.repository.WorkflowScheduleRepository;
+import io.deccan.controlplane.workflow.entity.Workflow;
+import io.deccan.controlplane.workflow.repository.WorkflowRepository;
+import lombok.RequiredArgsConstructor;
+
+
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class WorkflowScheduleServiceImpl
+        implements WorkflowScheduleService {
+
+    private final WorkflowRepository workflowRepository;
+
+    private final WorkflowScheduleRepository scheduleRepository;
+    private final WorkflowScheduler workflowScheduler;
+
+
+    @Override
+    public WorkflowSchedule createSchedule(
+            UUID workflowId,
+            WorkflowSchedule schedule) {
+
+        Workflow workflow =
+                workflowRepository.findById(workflowId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Workflow not found"));
+
+        schedule.setWorkflow(workflow);
+
+        schedule =
+                scheduleRepository.save(schedule);
+
+        if (schedule.getType() == ScheduleType.CRON &&
+                Boolean.TRUE.equals(schedule.getEnabled())) {
+
+            workflowScheduler.register(
+                    schedule);
+
+        }
+
+        return schedule;
+
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<WorkflowSchedule> getSchedules(
+            UUID workflowId) {
+
+        Workflow workflow =
+                workflowRepository.findById(workflowId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Workflow not found"));
+
+        return scheduleRepository.findByWorkflow(
+                workflow);
+
+    }
+    @Override
+    public void enableSchedule(
+            UUID scheduleId) {
+
+        WorkflowSchedule schedule =
+                scheduleRepository.findById(scheduleId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Schedule not found"));
+
+        schedule.setEnabled(true);
+
+        scheduleRepository.save(schedule);
+
+        if (schedule.getType() == ScheduleType.CRON) {
+
+            workflowScheduler.register(
+                    schedule);
+
+        }
+
+    }
+    @Override
+    public void disableSchedule(
+            UUID scheduleId) {
+
+        WorkflowSchedule schedule =
+                scheduleRepository.findById(scheduleId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Schedule not found"));
+
+        schedule.setEnabled(false);
+
+        scheduleRepository.save(schedule);
+
+        workflowScheduler.unregister(
+                schedule.getId());
+
+    }
+    @Override
+    public WorkflowSchedule updateSchedule(
+            UUID scheduleId,
+            WorkflowSchedule updated) {
+
+        WorkflowSchedule existing =
+                scheduleRepository.findById(scheduleId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Schedule not found"));
+
+        existing.setType(
+                updated.getType());
+
+        existing.setCronExpression(
+                updated.getCronExpression());
+
+        existing.setEnabled(
+                updated.getEnabled());
+
+        existing =
+                scheduleRepository.save(existing);
+
+        workflowScheduler.unregister(
+                existing.getId());
+
+        if (existing.getType() == ScheduleType.CRON &&
+                Boolean.TRUE.equals(existing.getEnabled())) {
+
+            workflowScheduler.register(existing);
+
+        }
+
+        return existing;
+
+    }
+    @Override
+    public void deleteSchedule(
+            UUID scheduleId) {
+
+        WorkflowSchedule schedule =
+                scheduleRepository.findById(scheduleId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Schedule not found"));
+
+        workflowScheduler.unregister(
+                schedule.getId());
+
+        scheduleRepository.delete(schedule);
+
+    }
+
+}
+
+

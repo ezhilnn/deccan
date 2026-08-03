@@ -7,6 +7,9 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import io.deccan.controlplane.task.entity.ExecutionTask;
+import io.deccan.controlplane.task.enums.TaskStatus;
+import io.deccan.controlplane.task.repository.ExecutionTaskRepository;
 import io.deccan.controlplane.worker.entity.Worker;
 import io.deccan.controlplane.worker.enums.WorkerStatus;
 import io.deccan.controlplane.worker.repository.WorkerRepository;
@@ -19,6 +22,7 @@ public class WorkerServiceImpl
         implements WorkerService {
 
     private final WorkerRepository repository;
+    private final ExecutionTaskRepository executionTaskRepository;
 
     @Override
     public Worker register(
@@ -154,5 +158,35 @@ public class WorkerServiceImpl
         return updated;
 
         }
+ @Override
+public int recoverExpiredLeases() {
+
+    List<ExecutionTask> tasks =
+            executionTaskRepository
+                    .findByStatusAndLeaseUntilBefore(
+                            TaskStatus.LEASED,
+                            Instant.now());
+
+    int recovered = 0;
+
+    for (ExecutionTask task : tasks) {
+
+        task.setStatus(TaskStatus.READY);
+
+        task.setWorker(null);
+
+        task.setLeaseUntil(null);
+
+        task.setLeasedAt(null);
+
+        executionTaskRepository.save(task);
+
+        recovered++;
+
+    }
+
+    return recovered;
+
+}
 
 }

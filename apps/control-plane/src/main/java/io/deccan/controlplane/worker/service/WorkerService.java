@@ -20,5 +20,6 @@ public interface WorkerService {
     Worker shutdown(
         UUID workerId);
     int markOfflineWorkers();
+    int recoverExpiredLeases();
 
 }
