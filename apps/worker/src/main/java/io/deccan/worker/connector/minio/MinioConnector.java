@@ -1,11 +1,11 @@
 package io.deccan.worker.connector.minio;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.deccan.worker.config.MinioProperties;
 import io.deccan.worker.connector.Connector;
 import io.deccan.worker.connector.ConnectorResult;
 import io.deccan.worker.context.VariableResolver;
 import io.deccan.worker.dto.response.ExecutionTaskResponse;
-import io.minio.DownloadObjectArgs;
 import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
@@ -27,6 +27,8 @@ public class MinioConnector
     private final ObjectMapper objectMapper;
 
     private final VariableResolver variableResolver;
+
+    private final MinioProperties properties;
 
     @Override
     public String type() {
@@ -86,6 +88,11 @@ public class MinioConnector
             MinioRequest request)
             throws Exception {
 
+        String bucket =
+                request.getBucket() != null
+                        ? request.getBucket()
+                        : properties.getBucket();
+
         String content =
                 variableResolver.resolve(
                         request.getContent());
@@ -100,7 +107,7 @@ public class MinioConnector
 
                 PutObjectArgs.builder()
 
-                        .bucket(request.getBucket())
+                        .bucket(bucket)
 
                         .object(request.getObject())
 
@@ -119,14 +126,14 @@ public class MinioConnector
         MinioResponse response =
                 MinioResponse.builder()
 
-                        .bucket(request.getBucket())
+                        .bucket(bucket)
 
                         .object(request.getObject())
 
                         .size((long) bytes.length)
 
                         .url("/"
-                                + request.getBucket()
+                                + bucket
                                 + "/"
                                 + request.getObject())
 
@@ -148,41 +155,54 @@ public class MinioConnector
             MinioRequest request)
             throws Exception {
 
-        minioClient.getObject(
+        String bucket =
+                request.getBucket() != null
+                        ? request.getBucket()
+                        : properties.getBucket();
 
-                GetObjectArgs.builder()
+        try (InputStream input =
+                     minioClient.getObject(
 
-                        .bucket(request.getBucket())
+                             GetObjectArgs.builder()
 
-                        .object(request.getObject())
+                                     .bucket(bucket)
 
-                        .build()
+                                     .object(request.getObject())
 
-        ).close();
+                                     .build()
 
-        MinioResponse response =
-                MinioResponse.builder()
+                     )) {
 
-                        .bucket(request.getBucket())
+            byte[] bytes =
+                    input.readAllBytes();
 
-                        .object(request.getObject())
+            MinioResponse response =
+                    MinioResponse.builder()
 
-                        .url("/"
-                                + request.getBucket()
-                                + "/"
-                                + request.getObject())
+                            .bucket(bucket)
 
-                        .build();
+                            .object(request.getObject())
 
-        return ConnectorResult.builder()
+                            .size((long) bytes.length)
 
-                .success(true)
+                            .url("/"
+                                    + bucket
+                                    + "/"
+                                    + request.getObject())
 
-                .output(
-                        objectMapper.valueToTree(
-                                response))
+                            .build();
 
-                .build();
+            return ConnectorResult.builder()
+
+                    .success(true)
+
+                    .output(
+                            objectMapper.valueToTree(
+                                    response))
+
+                    .build();
+
+        }
 
     }
 
