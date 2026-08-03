@@ -65,6 +65,13 @@ public interface ExecutionTaskRepository
     Optional<ExecutionTask> findByExecutionIdAndNodeId(
         UUID executionId,
         String nodeId);
+    List<ExecutionTask> findByExecutionIdAndStatusIn(
+
+            UUID executionId,
+
+            List<TaskStatus> statuses
+
+    );
 
 
 

@@ -341,5 +341,52 @@ public class ExecutionTaskServiceImpl
         return taskRepository.saveAll(expired);
 
         }
+@Override
+public void cancelTasks(
+        UUID executionId) {
+
+    List<ExecutionTask> tasks =
+
+            taskRepository.findByExecutionIdAndStatusIn(
+
+                    executionId,
+
+                    List.of(
+
+                            TaskStatus.PENDING,
+
+                            TaskStatus.READY,
+
+                            TaskStatus.LEASED
+
+                    ));
+
+    for (ExecutionTask task : tasks) {
+
+        task.setStatus(
+                TaskStatus.CANCELLED);
+
+        task.setLeaseUntil(null);
+
+        task.setLeasedAt(null);
+
+        Worker worker =
+                task.getWorker();
+
+        if (worker != null) {
+
+            worker.setStatus(
+                    WorkerStatus.ONLINE);
+
+            workerRepository.save(
+                    worker);
+
+        }
+
+    }
+
+    taskRepository.saveAll(tasks);
+
+}
 
 }

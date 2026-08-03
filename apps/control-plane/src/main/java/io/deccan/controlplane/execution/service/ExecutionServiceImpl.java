@@ -256,6 +256,8 @@ public class ExecutionServiceImpl
 
                 executionStateMachine.cancel(
                         execution);
+                executionTaskService.cancelTasks(
+                        execution.getId());
 
                 executionRepository.save(
                         execution);
