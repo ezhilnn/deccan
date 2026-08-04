@@ -23,30 +23,33 @@ public class ExecutionTaskFactory {
                 new ArrayList<>();
 
         for(WorkflowNode node : definition.getNodes()){
+                if ("manual-trigger".equals(node.getType())) {
+                        continue;
+                }
 
-            ExecutionTask task =
-                    new ExecutionTask();
+                ExecutionTask task =
+                        new ExecutionTask();
 
-            task.setExecution(
-                    execution);
+                task.setExecution(
+                        execution);
 
-            task.setNodeId(
-                    node.getId());
+                task.setNodeId(
+                        node.getId());
 
-            task.setNodeType(
-                    node.getType());
+                task.setNodeType(
+                        node.getType());
 
-            task.setConfiguration(
-                    node.getConfiguration());
+                task.setConfiguration(
+                        node.getConfiguration());
 
-            task.setStatus(
-                    TaskStatus.PENDING);
+                task.setStatus(
+                        TaskStatus.PENDING);
 
-            task.setRetryCount(
-                    0);
+                task.setRetryCount(
+                        0);
 
 
-            tasks.add(task);
+                tasks.add(task);
 
         }
 

@@ -73,7 +73,11 @@ public class WorkflowSchedulerServiceImpl
                                 .findByExecutionIdAndNodeId(
                                         execution.getId(),
                                         node.getId())
-                                .orElseThrow();
+                                .orElse(null);
+
+                if (task == null) {
+                continue;
+}
 
                 task.setStatus(
                         TaskStatus.READY);
