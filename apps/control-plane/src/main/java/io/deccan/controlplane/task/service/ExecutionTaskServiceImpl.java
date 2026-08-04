@@ -275,15 +275,21 @@ public class ExecutionTaskServiceImpl
 
     }
     @Override
-    public ExecutionTask leaseNextTask(){
+        public ExecutionTask leaseNextTask() {
 
-        Worker worker =
-                workerService.findAvailableWorker();
+        try {
 
-        return leaseTask(
-                worker.getId());
+                Worker worker =
+                        workerService.findAvailableWorker();
 
-    }
+                return leaseTask(worker.getId());
+
+        } catch (IllegalStateException ex) {
+
+                return null;
+
+        }
+        }
         @Override
         public void heartbeat(
                 UUID taskId,

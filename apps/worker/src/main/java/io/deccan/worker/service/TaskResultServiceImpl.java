@@ -8,6 +8,7 @@ import org.springframework.web.client.RestClient;
 
 import io.deccan.worker.dto.request.TaskResultRequest;
 import lombok.RequiredArgsConstructor;
+import com.fasterxml.jackson.databind.JsonNode;
 
 @Service
 @RequiredArgsConstructor
@@ -41,10 +42,11 @@ public class TaskResultServiceImpl
     }
 
     @Override
-    public void reportFailure(UUID taskId) {
+    public void reportFailure(UUID taskId,String errorMessage) {
 
         TaskResultRequest request = new TaskResultRequest();
         request.setSuccess(false);
+        request.setErrorMessage(errorMessage);
 
         String token = authenticationService.getToken();
 

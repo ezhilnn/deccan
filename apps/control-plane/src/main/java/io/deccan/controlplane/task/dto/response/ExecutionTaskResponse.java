@@ -32,5 +32,6 @@ public class ExecutionTaskResponse {
     private Instant completedAt;
     private JsonNode configuration;
     private Integer retryCount;
+    private Integer workflowVersion;
 
 }

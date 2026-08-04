@@ -27,8 +27,7 @@ public class WorkerMdcFilter {
                                 task.getExecutionId().toString())
                         .taskId(
                                 task.getId().toString())
-                        .workflowId(
-                                task.getWorkflowVersionId().toString())
+                        .workflowVersion(task.getWorkflowVersion())
                         .correlationId(
                                 UUID.randomUUID().toString())
                         .build());

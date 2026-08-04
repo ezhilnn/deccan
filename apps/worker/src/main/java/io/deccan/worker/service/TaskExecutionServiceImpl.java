@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import io.deccan.worker.context.dto.response.ExecutionContextResponse;
 import io.deccan.worker.context.service.ExecutionContextService;
 import io.deccan.worker.task.TaskStatusService;
+import io.deccan.worker.heartbeat.TaskHeartbeatService;
 
 @Slf4j
 @Service

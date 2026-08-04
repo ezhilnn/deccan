@@ -26,16 +26,17 @@ public interface ExecutionTaskRepository
     //         Instant now);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-   @Query("""
-        SELECT t
-        FROM ExecutionTask t
-        WHERE t.status=:status
-        AND (
-                t.leaseUntil IS NULL
-                OR t.leaseUntil < CURRENT_TIMESTAMP
-        )
-        ORDER BY t.createdAt
-        """)
+    @Query("""
+    SELECT t
+    FROM ExecutionTask t
+    JOIN FETCH t.execution
+    WHERE t.status = :status
+    AND (
+        t.leaseUntil IS NULL
+        OR t.leaseUntil < CURRENT_TIMESTAMP
+    )
+    ORDER BY t.createdAt
+    """)
     List<ExecutionTask> leaseNextTask(
 
             @Param("status")

@@ -77,6 +77,7 @@ public class WorkflowSchedulerServiceImpl
 
                 task.setStatus(
                         TaskStatus.READY);
+                
 
                 taskRepository.save(task);
 

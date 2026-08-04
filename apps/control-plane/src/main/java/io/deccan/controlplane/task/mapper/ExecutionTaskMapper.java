@@ -22,6 +22,7 @@ public class ExecutionTaskMapper {
                 .leaseUntil(task.getLeaseUntil())
                 .startedAt(task.getStartedAt())
                 .completedAt(task.getCompletedAt())
+                .workflowVersion(task.getExecution().getWorkflowVersion())
                 .build();
 
     }

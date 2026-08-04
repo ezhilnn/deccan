@@ -12,6 +12,9 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import java.time.Duration;
+import java.time.Instant;
+import org.springframework.web.client.ResourceAccessException;
 
 @Slf4j
 @Service
@@ -26,6 +29,11 @@ public class TaskPollingServiceImpl
     private final ExecutionPipeline executionPipeline;
 
     private final AuthenticationService authenticationService;
+    private static final Duration STARTUP_GRACE_PERIOD =
+            Duration.ofMinutes(1);
+
+    private final Instant startupTime =
+            Instant.now();
 
     @Override
     public void poll() {
@@ -63,7 +71,24 @@ public class TaskPollingServiceImpl
 
             executionPipeline.execute(body.getData());
 
-        } catch (Exception ex) {
+        } catch (ResourceAccessException ex) {
+
+            if (Instant.now().isBefore(
+                    startupTime.plus(STARTUP_GRACE_PERIOD))) {
+
+                log.info(
+                        "Waiting for Control Plane...");
+
+                return;
+
+            }
+
+            log.error(
+                    "Unable to reach Control Plane.",
+                    ex);
+
+        }
+        catch (Exception ex) {
 
             log.error(
                     "Failed while polling for tasks.",

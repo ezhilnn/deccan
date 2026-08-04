@@ -57,7 +57,7 @@ deccan:
       last-name: User
       email: admin@deccan.dev
       password: change-me
-    secret:
+  secret:
       encryption-key: "1234567890123456"
 minio:
   endpoint: http://localhost:9000

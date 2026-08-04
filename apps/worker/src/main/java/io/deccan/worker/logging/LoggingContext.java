@@ -17,4 +17,6 @@ public class LoggingContext {
 
     private String correlationId;
 
+    private Integer workflowVersion;
+
 }
