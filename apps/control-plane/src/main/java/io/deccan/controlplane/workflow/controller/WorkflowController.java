@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import io.deccan.controlplane.workflow.dto.response.PageResponse;
 import io.deccan.controlplane.workflow.enums.WorkflowStatus;
 import org.springframework.data.domain.Page;
-
+import org.springframework.http.HttpStatus;
 
 import java.util.List;
 import java.util.UUID;
@@ -36,6 +36,7 @@ public class WorkflowController {
     private final WorkflowMapper mapper;
 
     @PreAuthorize("hasAuthority('workflow.write')")
+    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
     public ApiResponse<WorkflowResponse> createWorkflow(
             @Valid @RequestBody CreateWorkflowRequest request) {

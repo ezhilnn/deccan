@@ -4,13 +4,23 @@ import io.deccan.controlplane.common.response.ErrorResponse;
 import io.deccan.controlplane.identity.exception.IdentityAlreadyExistsException;
 import io.deccan.controlplane.identity.exception.IdentityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import lombok.extern.slf4j.Slf4j;
+
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.ConstraintViolationException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+
 
 import java.util.List;
 
@@ -73,12 +83,157 @@ public class GlobalExceptionHandler {
                 );
     }
 
-        @ExceptionHandler(Exception.class)
-        public ResponseEntity<ErrorResponse> handleException(
-                Exception ex,
-                HttpServletRequest request) {
+    @ExceptionHandler({
+            AuthorizationDeniedException.class,
+            AccessDeniedException.class
+    })
+    public ResponseEntity<ErrorResponse> handleAccessDenied(
+            RuntimeException ex,
+            HttpServletRequest request) {
 
-         log.error(
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(
+                        ErrorResponse.builder()
+                                .status(403)
+                                .error("ACCESS_DENIED")
+                                .message("You do not have permission to perform this action")
+                                .path(request.getRequestURI())
+                                .build()
+                );
+    }
+        @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
+        public ResponseEntity<ErrorResponse> handleBadCredentials(
+                Exception ex, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ErrorResponse.builder()
+                        .status(401).error("INVALID_CREDENTIALS")
+                        .message("Invalid email or password")
+                        .path(request.getRequestURI()).build());
+        }
+
+        @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+        public ResponseEntity<ErrorResponse> handleMalformedJson(
+                Exception ex, HttpServletRequest request) {
+        return ResponseEntity.badRequest()
+                .body(ErrorResponse.builder()
+                        .status(400).error("MALFORMED_REQUEST")
+                        .message("Request body is malformed or contains an invalid value")
+                        .path(request.getRequestURI()).build());
+        }
+
+        @ExceptionHandler({
+                io.deccan.controlplane.workflow.definition.validation.WorkflowValidationException.class,
+                io.deccan.controlplane.workflow.lifecycle.WorkflowLifecycleException.class,
+                IllegalArgumentException.class
+        })
+        public ResponseEntity<ErrorResponse> handleBadRequest(
+                RuntimeException ex, HttpServletRequest request) {
+        return ResponseEntity.badRequest()
+                .body(ErrorResponse.builder()
+                        .status(400).error("BAD_REQUEST")
+                        .message(ex.getMessage())
+                        .path(request.getRequestURI()).build());
+        }
+
+        @ExceptionHandler(IllegalStateException.class)
+        public ResponseEntity<ErrorResponse> handleConflict(
+                IllegalStateException ex, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.builder()
+                        .status(409).error("CONFLICT")
+                        .message(ex.getMessage())
+                        .path(request.getRequestURI()).build());
+        }
+
+
+
+@ExceptionHandler(EntityNotFoundException.class)
+public ResponseEntity<ErrorResponse> handleEntityNotFound(
+        EntityNotFoundException ex,
+        HttpServletRequest request) {
+
+    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(
+                    ErrorResponse.builder()
+                            .status(404)
+                            .error("NOT_FOUND")
+                            .message(ex.getMessage())
+                            .path(request.getRequestURI())
+                            .build()
+            );
+}
+
+@ExceptionHandler(ConstraintViolationException.class)
+public ResponseEntity<ErrorResponse> handleConstraintViolation(
+        ConstraintViolationException ex,
+        HttpServletRequest request) {
+
+    return ResponseEntity.badRequest()
+            .body(
+                    ErrorResponse.builder()
+                            .status(400)
+                            .error("VALIDATION_FAILED")
+                            .message(ex.getMessage())
+                            .path(request.getRequestURI())
+                            .build()
+            );
+}
+
+@ExceptionHandler(DataIntegrityViolationException.class)
+public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(
+        DataIntegrityViolationException ex,
+        HttpServletRequest request) {
+
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(
+                    ErrorResponse.builder()
+                            .status(409)
+                            .error("DATA_INTEGRITY_VIOLATION")
+                            .message("Database constraint violated")
+                            .path(request.getRequestURI())
+                            .build()
+            );
+}
+
+@ExceptionHandler(MissingServletRequestParameterException.class)
+public ResponseEntity<ErrorResponse> handleMissingParameter(
+        MissingServletRequestParameterException ex,
+        HttpServletRequest request) {
+
+    return ResponseEntity.badRequest()
+            .body(
+                    ErrorResponse.builder()
+                            .status(400)
+                            .error("MISSING_PARAMETER")
+                            .message(ex.getParameterName() + " is required")
+                            .path(request.getRequestURI())
+                            .build()
+            );
+}
+
+@ExceptionHandler(MethodArgumentTypeMismatchException.class)
+public ResponseEntity<ErrorResponse> handleTypeMismatch(
+        MethodArgumentTypeMismatchException ex,
+        HttpServletRequest request) {
+
+    return ResponseEntity.badRequest()
+            .body(
+                    ErrorResponse.builder()
+                            .status(400)
+                            .error("INVALID_PARAMETER")
+                            .message("Invalid value for parameter '" + ex.getName() + "'")
+                            .path(request.getRequestURI())
+                            .build()
+            );
+}
+
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleException(
+            Exception ex,
+            HttpServletRequest request) {
+
+        log.error(
                 "Unhandled exception while processing {} {}",
                 request.getMethod(),
                 request.getRequestURI(),
@@ -93,6 +248,6 @@ public class GlobalExceptionHandler {
                                 .path(request.getRequestURI())
                                 .build()
                 );
-        }
+    }
 
 }

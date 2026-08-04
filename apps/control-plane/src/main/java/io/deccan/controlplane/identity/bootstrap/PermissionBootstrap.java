@@ -47,7 +47,9 @@ public class PermissionBootstrap implements CommandLineRunner {
 
         createPermission("role.read");
         createPermission("role.write");
-
+        createPermission("artifact.read");
+        createPermission("artifact.write");
+        createPermission("workflow.update");
         if (bootstrapProperties.isEnabled()) {
             bootstrapAdmin();
         }
@@ -69,9 +71,37 @@ public class PermissionBootstrap implements CommandLineRunner {
 
     private void bootstrapAdmin() {
 
-        if (userRepository.existsByEmail(
+       if (userRepository.existsByEmail(
                 bootstrapProperties.getAdmin().getEmail())) {
-            return;
+
+                Organization organization =
+                        organizationRepository
+                                .findBySlug(
+                                        bootstrapProperties
+                                                .getOrganization()
+                                                .getSlug())
+                                .orElse(null);
+
+                if (organization != null) {
+
+                        roleRepository
+                                .findByOrganizationAndName(
+                                        organization,
+                                        "ADMIN")
+                                .ifPresent(role -> {
+
+                                role.setPermissions(
+                                        new HashSet<>(
+                                                permissionRepository.findAll()));
+
+                                roleRepository.save(role);
+
+                                });
+
+                }
+
+                return;
+
         }
 
         Organization organization = new Organization();

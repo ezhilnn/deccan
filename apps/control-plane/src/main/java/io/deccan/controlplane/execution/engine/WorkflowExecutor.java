@@ -45,9 +45,9 @@ public class WorkflowExecutor {
         WorkflowVersion version){
 
         try{
-                executionStateMachine.start(execution);
+                // executionStateMachine.start(execution);
 
-                executionRepository.save(execution);
+                // executionRepository.save(execution);
 
             
             WorkflowDefinition definition =

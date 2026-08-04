@@ -10,6 +10,7 @@ public interface WorkflowTransferService {
             UUID workflowId);
 
     UUID importWorkflow(
-            WorkflowExportResponse request);
+        UUID organizationId,
+        WorkflowExportResponse request);
 
 }

@@ -7,6 +7,8 @@ import io.deccan.controlplane.connector.credential.mapper.CredentialMapper;
 import io.deccan.controlplane.connector.credential.service.CredentialService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,6 +25,7 @@ public class CredentialController {
     private final CredentialMapper mapper;
 
     @PreAuthorize("hasAuthority('secret.write')")
+    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
     public ApiResponse<CredentialResponse> create(
             @Valid

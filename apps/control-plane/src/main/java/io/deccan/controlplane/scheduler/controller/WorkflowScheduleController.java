@@ -8,6 +8,8 @@ import io.deccan.controlplane.scheduler.mapper.WorkflowScheduleMapper;
 import io.deccan.controlplane.scheduler.service.WorkflowScheduleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,6 +27,7 @@ public class WorkflowScheduleController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('workflow.update')")
+    @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<WorkflowScheduleResponse> create(
 
             @PathVariable

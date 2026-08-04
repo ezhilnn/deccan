@@ -1,5 +1,6 @@
 package io.deccan.controlplane.workflow.transfer.service;
 
+import io.deccan.controlplane.identity.repository.OrganizationRepository;
 import io.deccan.controlplane.workflow.entity.Workflow;
 import io.deccan.controlplane.workflow.entity.WorkflowVersion;
 import io.deccan.controlplane.workflow.repository.WorkflowRepository;
@@ -7,6 +8,8 @@ import io.deccan.controlplane.workflow.repository.WorkflowVersionRepository;
 import io.deccan.controlplane.workflow.transfer.dto.response.WorkflowExportResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import io.deccan.controlplane.identity.repository.OrganizationRepository;
+import io.deccan.controlplane.identity.entity.Organization;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
@@ -20,6 +23,7 @@ public class WorkflowTransferServiceImpl
     private final WorkflowRepository workflowRepository;
 
     private final WorkflowVersionRepository workflowVersionRepository;
+    private final OrganizationRepository organizationRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -52,11 +56,21 @@ public class WorkflowTransferServiceImpl
     }
 
     @Override
-    public UUID importWorkflow(
-            WorkflowExportResponse request) {
+   public UUID importWorkflow(
+        UUID organizationId,
+        WorkflowExportResponse request) {
 
         Workflow workflow =
                 new Workflow();
+        Organization organization =
+        organizationRepository
+                .findById(organizationId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Organization not found"));
+
+        workflow.setOrganization(
+                organization);
 
         workflow.setName(
                 request.getName());
@@ -69,6 +83,14 @@ public class WorkflowTransferServiceImpl
 
         workflow.setCurrentVersion(
                 request.getVersion());
+        if (workflowRepository.existsByOrganizationAndName(
+                organization,
+                request.getName())) {
+
+        throw new IllegalArgumentException(
+                "Workflow already exists");
+
+        }
        
 
         workflow =

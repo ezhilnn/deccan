@@ -7,6 +7,8 @@ import io.deccan.controlplane.connector.mapper.ConnectorMapper;
 import io.deccan.controlplane.connector.service.ConnectorService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,6 +25,7 @@ public class ConnectorController {
     private final ConnectorMapper mapper;
 
     @PreAuthorize("hasAuthority('connector.write')")
+    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
     public ApiResponse<ConnectorResponse> create(
 

@@ -43,7 +43,7 @@ public class SecurityConfig {
                                 "/actuator/**"
                         ).permitAll()
                         .requestMatchers(
-                                "/api/webhooks/**")
+                                "/webhooks/**")
                         .permitAll()
 
                         .anyRequest()

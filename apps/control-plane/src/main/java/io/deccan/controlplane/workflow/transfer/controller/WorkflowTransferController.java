@@ -33,16 +33,20 @@ public class WorkflowTransferController {
 
     }
 
-    @PostMapping("/import")
+    @PostMapping("/import/{organizationId}")
     @PreAuthorize("hasAuthority('workflow.write')")
     public ApiResponse<UUID> importWorkflow(
 
-            @RequestBody
-            WorkflowExportResponse request) {
+        @PathVariable
+        UUID organizationId,
+
+        @RequestBody
+        WorkflowExportResponse request) {
 
         UUID workflowId =
-                service.importWorkflow(
-                        request);
+        service.importWorkflow(
+                organizationId,
+                request);
 
         return ApiResponse.<UUID>builder()
                 .status(201)

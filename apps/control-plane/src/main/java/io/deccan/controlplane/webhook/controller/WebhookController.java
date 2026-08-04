@@ -16,6 +16,8 @@ import io.deccan.controlplane.webhook.mapper.WebhookMapper;
 import io.deccan.controlplane.webhook.service.WebhookService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,6 +39,7 @@ public class WebhookController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('workflow.write')")
+    @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<WebhookResponse> create(
 
             @Valid
