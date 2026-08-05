@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import io.deccan.controlplane.task.entity.ExecutionTask;
 import io.deccan.controlplane.task.enums.TaskStatus;
 import io.deccan.controlplane.task.repository.ExecutionTaskRepository;
+import io.deccan.controlplane.task.service.ExecutionTaskService;
 import io.deccan.controlplane.worker.entity.Worker;
 import io.deccan.controlplane.worker.enums.WorkerStatus;
 import io.deccan.controlplane.worker.repository.WorkerRepository;
@@ -23,6 +24,7 @@ public class WorkerServiceImpl
 
     private final WorkerRepository repository;
     private final ExecutionTaskRepository executionTaskRepository;
+//     private final ExecutionTaskService executionTaskService;
 
     @Override
     public Worker register(
@@ -161,7 +163,7 @@ public class WorkerServiceImpl
  @Override
 public int recoverExpiredLeases() {
 
-    List<ExecutionTask> tasks =
+       List<ExecutionTask> tasks =
             executionTaskRepository
                     .findByStatusAndLeaseUntilBefore(
                             TaskStatus.LEASED,

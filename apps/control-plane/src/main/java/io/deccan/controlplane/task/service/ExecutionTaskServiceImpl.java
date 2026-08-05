@@ -101,12 +101,19 @@ public class ExecutionTaskServiceImpl
         }
         task.setWorker(worker);
 
-        task.setStatus(TaskStatus.LEASED);
-       task.setLeasedAt(
-        Instant.now());
+        Instant now = Instant.now();
+
+        task.setStatus(
+                TaskStatus.LEASED);
+
+        task.setStartedAt(
+                now);
+
+        task.setLeasedAt(
+                now);
 
         task.setLeaseUntil(
-                Instant.now().plusSeconds(60));
+                now.plusSeconds(60));
         worker.setStatus(
             WorkerStatus.BUSY);
         workerRepository.save(worker);
@@ -138,17 +145,9 @@ public class ExecutionTaskServiceImpl
             UUID taskId,
             String reason) {
 
-        ExecutionTask task =
-                taskRepository.findById(taskId)
-                        .orElseThrow(() ->
-                                new IllegalArgumentException(
-                                        "Task not found"));
-
-        task.setStatus(TaskStatus.FAILED);
-
-        task.setLeaseUntil(null);
-
-        taskRepository.save(task);
+       reportFailure(
+            taskId,
+            reason);
 
     }
    @Override
@@ -167,6 +166,9 @@ public class ExecutionTaskServiceImpl
                 Instant.now());
 
         task.setLeaseUntil(null);
+        task.setOutput(
+        output);
+
 
         taskRepository.save(task);
 
@@ -330,6 +332,19 @@ public class ExecutionTaskServiceImpl
 
         for (ExecutionTask task : expired) {
 
+                Worker worker =
+                        task.getWorker();
+
+                if (worker != null) {
+
+                        worker.setStatus(
+                                WorkerStatus.ONLINE);
+
+                        workerRepository.save(
+                                worker);
+
+                }
+
                 task.setStatus(
                         TaskStatus.READY);
 
@@ -342,9 +357,9 @@ public class ExecutionTaskServiceImpl
                 task.setRetryCount(
                         task.getRetryCount() + 1);
 
-        }
+                }
 
-        return taskRepository.saveAll(expired);
+                return taskRepository.saveAll(expired);
 
         }
 @Override
@@ -371,6 +386,9 @@ public void cancelTasks(
 
         task.setStatus(
                 TaskStatus.CANCELLED);
+
+        task.setCompletedAt(
+                Instant.now());
 
         task.setLeaseUntil(null);
 

@@ -141,57 +141,32 @@ public class ExecutionServiceImpl
                         execution,
                         version);
 
-                executionStateMachine.complete(
-                        execution);
-
-                execution =
-                        executionRepository.save(
-                                execution);
-
-                executionEventPublisher.publish(
-
-                        ExecutionEvent.builder()
-
-                                .executionId(
-                                        execution.getId())
-
-                                .workflowId(
-                                        workflow.getId())
-
-                                .type(
-                                        "EXECUTION_COMPLETED")
-
-                                .timestamp(
-                                        OffsetDateTime.now())
-
-                                .build()
-
-                );
+                
 
         }
         catch(Exception ex){
 
-                        executionStateMachine.fail(
-                        execution,
-                        ex.getMessage());
-                                 execution =
-                executionRepository.save(
-                        execution);
+                //         executionStateMachine.fail(
+                //         execution,
+                //         ex.getMessage());
+                //                  execution =
+                // executionRepository.save(
+                //         execution);
                         log.error(
         "Execution [{}] failed",
         execution.getId(),
         ex);
 
-                executionEventPublisher.publish(
+                // executionEventPublisher.publish(
 
-                        ExecutionEvent.builder()
-                                .executionId(execution.getId())
-                                .workflowId(workflow.getId())
-                                .type("EXECUTION_FAILED")
-                                .timestamp(OffsetDateTime.now())
-                                .build()
+                //         ExecutionEvent.builder()
+                //                 .executionId(execution.getId())
+                //                 .workflowId(workflow.getId())
+                //                 .type("EXECUTION_FAILED")
+                //                 .timestamp(OffsetDateTime.now())
+                //                 .build()
 
-                );
+                // );
 
                 throw ex;
 
@@ -203,12 +178,12 @@ public class ExecutionServiceImpl
         log.info(
         "Execution [{}] created successfully",
         execution.getId());
-        if(execution.getStatus()==ExecutionStatus.RUNNING){
+        // if(execution.getStatus()==ExecutionStatus.RUNNING){
 
-        throw new IllegalStateException(
-                "Execution finished but is still RUNNING");
+        // throw new IllegalStateException(
+        //         "Execution finished but is still RUNNING");
 
-        }
+        // }
 
         return execution;
 

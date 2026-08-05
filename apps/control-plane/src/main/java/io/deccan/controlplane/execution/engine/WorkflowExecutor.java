@@ -164,6 +164,25 @@ public class WorkflowExecutor {
 
                 executionRepository.save(
                         execution);
+                        executionEventPublisher.publish(
+
+        ExecutionEvent.builder()
+
+                .executionId(
+                        execution.getId())
+
+                .workflowId(
+                        execution.getWorkflow().getId())
+
+                .type(
+                        "EXECUTION_COMPLETED")
+
+                .timestamp(
+                        OffsetDateTime.now())
+
+                .build()
+
+);
         log.info(
         "Workflow execution [{}] completed successfully",
         execution.getId());
