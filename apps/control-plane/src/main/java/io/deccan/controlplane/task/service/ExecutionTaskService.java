@@ -1,6 +1,7 @@
 package io.deccan.controlplane.task.service;
 
 import io.deccan.controlplane.execution.entity.WorkflowExecution;
+import io.deccan.controlplane.task.dto.response.ExecutionTaskResponse;
 import io.deccan.controlplane.task.entity.ExecutionTask;
 import io.deccan.controlplane.workflow.entity.WorkflowVersion;
 
@@ -34,7 +35,7 @@ public interface ExecutionTaskService {
     void reportFailure(
             UUID taskId,
             String errorMessage);
-    List<ExecutionTask> getTasks(
+    List<ExecutionTaskResponse> getTasks(
         UUID executionId);
     ExecutionTask leaseNextTask();
     void heartbeat(

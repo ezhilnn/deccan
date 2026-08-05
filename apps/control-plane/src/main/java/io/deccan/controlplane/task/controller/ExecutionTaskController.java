@@ -75,10 +75,7 @@ public class ExecutionTaskController {
             UUID executionId){
 
         List<ExecutionTaskResponse> response =
-        service.getTasks(executionId)
-               .stream()
-               .map(mapper::toResponse)
-               .toList();
+        service.getTasks(executionId);
 
                 return ApiResponse.<List<ExecutionTaskResponse>>builder()
                         .status(200)

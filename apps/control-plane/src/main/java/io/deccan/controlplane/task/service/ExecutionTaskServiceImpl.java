@@ -19,6 +19,7 @@ import io.deccan.controlplane.scheduler.service.WorkflowSchedulerService;
 import io.deccan.controlplane.task.entity.ExecutionTask;
 import io.deccan.controlplane.task.enums.TaskStatus;
 import io.deccan.controlplane.task.factory.ExecutionTaskFactory;
+import io.deccan.controlplane.task.mapper.ExecutionTaskMapper;
 import io.deccan.controlplane.task.repository.ExecutionTaskRepository;
 import io.deccan.controlplane.worker.entity.Worker;
 import io.deccan.controlplane.worker.enums.WorkerStatus;
@@ -27,6 +28,7 @@ import io.deccan.controlplane.worker.service.WorkerService;
 import io.deccan.controlplane.workflow.definition.WorkflowDefinition;
 import io.deccan.controlplane.workflow.entity.WorkflowVersion;
 import lombok.RequiredArgsConstructor;
+import io.deccan.controlplane.task.dto.response.ExecutionTaskResponse;
 
 @Service
 @RequiredArgsConstructor
@@ -47,6 +49,7 @@ public class ExecutionTaskServiceImpl
     private final WorkflowExecutionRepository executionRepository;
     private final WorkflowSchedulerService workflowSchedulerService;
     private final ExecutionContextService executionContextService;
+    private final ExecutionTaskMapper mapper;
 
     @Override
     public List<ExecutionTask> createTasks(
@@ -267,15 +270,17 @@ public class ExecutionTaskServiceImpl
         }
 
     }
-    @Override
-    @Transactional(readOnly = true)
-    public List<ExecutionTask> getTasks(
-            UUID executionId){
+        @Override
+        @Transactional(readOnly = true)
+        public List<ExecutionTaskResponse> getTasks(
+                UUID executionId) {
 
-        return taskRepository.findByExecutionId(
-                executionId);
+        return taskRepository.findByExecutionId(executionId)
+                .stream()
+                .map(mapper::toResponse)
+                .toList();
 
-    }
+        }
     @Override
         public ExecutionTask leaseNextTask() {
 
