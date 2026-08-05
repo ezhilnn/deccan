@@ -9,6 +9,8 @@ import io.deccan.controlplane.worker.mapper.WorkerMapper;
 import io.deccan.controlplane.worker.service.WorkerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,6 +28,7 @@ public class WorkerController {
     private final WorkerMapper mapper;
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<WorkerResponse> register(
 
             @Valid

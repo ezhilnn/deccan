@@ -104,6 +104,7 @@ public class WorkflowController {
         }
    @PreAuthorize("hasAuthority('workflow.write')")
         @PostMapping("/{workflowId}/publish")
+        @ResponseStatus(HttpStatus.CREATED)
         public ApiResponse<WorkflowVersionResponse> publishWorkflow(
 
                 @PathVariable UUID workflowId,

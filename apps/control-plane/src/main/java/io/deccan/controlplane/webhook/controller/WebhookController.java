@@ -136,6 +136,7 @@ public class WebhookController {
     }
 
     @PostMapping("/{endpoint}/trigger")
+    @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<WebhookTriggerResponse> trigger(
 
             @PathVariable

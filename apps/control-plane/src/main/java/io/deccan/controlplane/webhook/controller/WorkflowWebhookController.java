@@ -8,6 +8,8 @@ import io.deccan.controlplane.webhook.entity.WorkflowWebhook;
 import io.deccan.controlplane.webhook.mapper.WorkflowWebhookMapper;
 import io.deccan.controlplane.webhook.service.WorkflowWebhookService;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,6 +25,7 @@ public class WorkflowWebhookController {
 
     @PostMapping("/workflows/{workflowId}/webhooks")
     @PreAuthorize("hasAuthority('workflow.update')")
+    @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<WorkflowWebhookResponse> register(
 
             @PathVariable

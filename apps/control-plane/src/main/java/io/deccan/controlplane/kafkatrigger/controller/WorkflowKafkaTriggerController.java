@@ -7,6 +7,8 @@ import io.deccan.controlplane.kafkatrigger.mapper.WorkflowKafkaTriggerMapper;
 import io.deccan.controlplane.kafkatrigger.registry.KafkaTriggerRegistry;
 import io.deccan.controlplane.kafkatrigger.service.WorkflowKafkaTriggerService;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,6 +27,7 @@ public class WorkflowKafkaTriggerController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('workflow.update')")
+    @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<WorkflowKafkaTriggerResponse> register(
 
             @PathVariable

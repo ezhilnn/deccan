@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Component
 public class ExecutionTaskFactory {
@@ -23,7 +24,7 @@ public class ExecutionTaskFactory {
                 new ArrayList<>();
 
         for(WorkflowNode node : definition.getNodes()){
-                if ("manual-trigger".equals(node.getType())) {
+                if (isControlPlaneNative(node.getType())) {
                         continue;
                 }
 
@@ -56,5 +57,17 @@ public class ExecutionTaskFactory {
         return tasks;
 
     }
+    private boolean isControlPlaneNative(
+                String nodeType) {
 
+        return CONTROL_PLANE_NATIVE_NODE_TYPES.contains(
+                nodeType);
+
+        }
+    private static final Set<String> CONTROL_PLANE_NATIVE_NODE_TYPES =
+        Set.of(
+                "manual-trigger",
+                "condition",
+                "response"
+        );
 }
