@@ -3,9 +3,13 @@ package io.deccan.controlplane.workflow.nodecatalog.entity;
 import io.deccan.controlplane.common.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
+import jakarta.persistence.EnumType;
+
+import io.deccan.controlplane.workflow.nodecatalog.enums.ExecutionMode;
 
 @Getter
 @Setter
@@ -27,5 +31,8 @@ public class NodeCatalog extends BaseEntity {
 
     @Column(nullable=false)
     private Boolean enabled;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "execution_mode", nullable = false, length = 30)
+    private ExecutionMode executionMode;
 
 }

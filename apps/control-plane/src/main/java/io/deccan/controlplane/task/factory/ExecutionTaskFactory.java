@@ -5,14 +5,24 @@ import io.deccan.controlplane.task.entity.ExecutionTask;
 import io.deccan.controlplane.task.enums.TaskStatus;
 import io.deccan.controlplane.workflow.definition.WorkflowDefinition;
 import io.deccan.controlplane.workflow.definition.node.WorkflowNode;
+import io.deccan.controlplane.workflow.nodecatalog.repository.NodeCatalogRepository;
+
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import lombok.RequiredArgsConstructor;
 
+import io.deccan.controlplane.workflow.nodecatalog.entity.NodeCatalog;
+import io.deccan.controlplane.workflow.nodecatalog.enums.ExecutionMode;
+import io.deccan.controlplane.workflow.nodecatalog.repository.NodeCatalogRepository;
+
+
+@RequiredArgsConstructor
 @Component
 public class ExecutionTaskFactory {
+        private final NodeCatalogRepository nodeCatalogRepository;
 
     public List<ExecutionTask> createTasks(
 
@@ -24,9 +34,19 @@ public class ExecutionTaskFactory {
                 new ArrayList<>();
 
         for(WorkflowNode node : definition.getNodes()){
-                if (isControlPlaneNative(node.getType())) {
+                NodeCatalog catalog =
+                                nodeCatalogRepository
+                                        .findByName(node.getType())
+                                        .orElseThrow(() ->
+                                                new IllegalStateException(
+                                                        "Unknown node type: " + node.getType()));
+
+                        if (catalog.getExecutionMode()
+                                == ExecutionMode.CONTROL_PLANE) {
+
                         continue;
-                }
+
+                        }
 
                 ExecutionTask task =
                         new ExecutionTask();
@@ -57,17 +77,5 @@ public class ExecutionTaskFactory {
         return tasks;
 
     }
-    private boolean isControlPlaneNative(
-                String nodeType) {
-
-        return CONTROL_PLANE_NATIVE_NODE_TYPES.contains(
-                nodeType);
-
-        }
-    private static final Set<String> CONTROL_PLANE_NATIVE_NODE_TYPES =
-        Set.of(
-                "manual-trigger",
-                "condition",
-                "response"
-        );
+   
 }
