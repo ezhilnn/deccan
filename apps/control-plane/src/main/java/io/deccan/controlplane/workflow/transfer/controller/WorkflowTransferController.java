@@ -1,13 +1,21 @@
 package io.deccan.controlplane.workflow.transfer.controller;
 
+import java.util.UUID;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+
 import io.deccan.controlplane.common.response.ApiResponse;
 import io.deccan.controlplane.workflow.transfer.dto.response.WorkflowExportResponse;
 import io.deccan.controlplane.workflow.transfer.service.WorkflowTransferService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -35,6 +43,7 @@ public class WorkflowTransferController {
 
     @PostMapping("/import/{organizationId}")
     @PreAuthorize("hasAuthority('workflow.write')")
+    @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<UUID> importWorkflow(
 
         @PathVariable
