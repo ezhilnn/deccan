@@ -1,6 +1,7 @@
 package io.deccan.controlplane.task.service;
 
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -201,6 +202,11 @@ public class ExecutionTaskServiceImpl
 
                 execution.setStatus(
                         ExecutionStatus.COMPLETED);
+                 execution.setFinishedAt(
+                        OffsetDateTime.now());
+
+                execution.setOutput(
+                        output);
 
                 executionRepository.save(
                         execution);
