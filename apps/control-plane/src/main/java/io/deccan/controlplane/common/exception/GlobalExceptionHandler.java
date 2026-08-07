@@ -1,10 +1,6 @@
 package io.deccan.controlplane.common.exception;
 
-import io.deccan.controlplane.common.response.ErrorResponse;
-import io.deccan.controlplane.identity.exception.IdentityAlreadyExistsException;
-import io.deccan.controlplane.identity.exception.IdentityNotFoundException;
-import jakarta.servlet.http.HttpServletRequest;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -16,13 +12,19 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.ConstraintViolationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-
-import java.util.List;
+import io.deccan.controlplane.common.response.ApiResponse;
+import io.deccan.controlplane.common.response.ErrorResponse;
+import io.deccan.controlplane.connector.exception.ConnectorNotFoundException;
+import io.deccan.controlplane.identity.exception.IdentityAlreadyExistsException;
+import io.deccan.controlplane.identity.exception.IdentityNotFoundException;
+import io.deccan.controlplane.worker.exception.WorkerNotFoundException;
+import io.deccan.controlplane.workflow.exception.WorkflowNotFoundException;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestControllerAdvice
@@ -134,7 +136,21 @@ public class GlobalExceptionHandler {
                         .message(ex.getMessage())
                         .path(request.getRequestURI()).build());
         }
+        @ExceptionHandler({
+        WorkflowNotFoundException.class,
+        ConnectorNotFoundException.class,
+        WorkerNotFoundException.class
+                })
+                public ResponseEntity<ApiResponse<Void>> handleNotFound(
+                        RuntimeException ex) {
 
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(
+                                ApiResponse.<Void>builder()
+                                        .status(404)
+                                        .message(ex.getMessage())
+                                        .build());
+                }
         @ExceptionHandler(IllegalStateException.class)
         public ResponseEntity<ErrorResponse> handleConflict(
                 IllegalStateException ex, HttpServletRequest request) {

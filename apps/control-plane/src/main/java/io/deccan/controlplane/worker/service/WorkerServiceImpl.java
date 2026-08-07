@@ -10,9 +10,9 @@ import org.springframework.transaction.annotation.Transactional;
 import io.deccan.controlplane.task.entity.ExecutionTask;
 import io.deccan.controlplane.task.enums.TaskStatus;
 import io.deccan.controlplane.task.repository.ExecutionTaskRepository;
-import io.deccan.controlplane.task.service.ExecutionTaskService;
 import io.deccan.controlplane.worker.entity.Worker;
 import io.deccan.controlplane.worker.enums.WorkerStatus;
+import io.deccan.controlplane.worker.exception.WorkerNotFoundException;
 import io.deccan.controlplane.worker.repository.WorkerRepository;
 import lombok.RequiredArgsConstructor;
 
@@ -57,8 +57,8 @@ public class WorkerServiceImpl
 
         return repository.findById(workerId)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Worker not found"));
+                       new WorkerNotFoundException(
+        "Worker not found"));
 
     }
     
@@ -78,8 +78,8 @@ public class WorkerServiceImpl
         Worker worker =
                 repository.findById(workerId)
                         .orElseThrow(() ->
-                                new IllegalArgumentException(
-                                        "Worker not found"));
+                                new WorkerNotFoundException(
+        "Worker not found"));
 
         worker.setLastHeartbeat(
                 Instant.now());
@@ -113,8 +113,8 @@ public class WorkerServiceImpl
         Worker worker =
                 repository.findById(workerId)
                         .orElseThrow(() ->
-                                new IllegalArgumentException(
-                                        "Worker not found"));
+                                new WorkerNotFoundException(
+        "Worker not found"));
 
         worker.setStatus(
                 WorkerStatus.OFFLINE);

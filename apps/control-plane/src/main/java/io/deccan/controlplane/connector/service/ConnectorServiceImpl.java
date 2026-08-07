@@ -1,21 +1,24 @@
 package io.deccan.controlplane.connector.service;
 
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.fasterxml.jackson.databind.JsonNode;
+
+import io.deccan.controlplane.connector.credential.entity.ConnectorCredential;
+import io.deccan.controlplane.connector.credential.repository.ConnectorCredentialRepository;
 import io.deccan.controlplane.connector.entity.Connector;
 import io.deccan.controlplane.connector.enums.ConnectorType;
+import io.deccan.controlplane.connector.exception.ConnectorNotFoundException;
 import io.deccan.controlplane.connector.repository.ConnectorRepository;
+import io.deccan.controlplane.connector.validation.ConnectorValidator;
+import io.deccan.controlplane.connector.version.ConnectorVersionValidator;
 import io.deccan.controlplane.identity.entity.Organization;
 import io.deccan.controlplane.identity.repository.OrganizationRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import io.deccan.controlplane.connector.validation.ConnectorValidator;
-import io.deccan.controlplane.connector.version.ConnectorVersionValidator;
-import io.deccan.controlplane.connector.credential.entity.ConnectorCredential;
-import io.deccan.controlplane.connector.credential.repository.ConnectorCredentialRepository;
-
-import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -92,8 +95,8 @@ public class ConnectorServiceImpl
 
         return connectorRepository.findById(connectorId)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Connector not found"));
+                        new ConnectorNotFoundException(
+        "Connector not found"));
 
     }
     @Override
@@ -107,8 +110,8 @@ public class ConnectorServiceImpl
         Connector connector =
                 connectorRepository.findById(connectorId)
                         .orElseThrow(() ->
-                                new IllegalArgumentException(
-                                        "Connector not found"));
+                                new ConnectorNotFoundException(
+        "Connector not found"));
 
         connector.setDisplayName(displayName);
         connector.setType(type);
@@ -128,8 +131,8 @@ public class ConnectorServiceImpl
         Connector connector =
                 connectorRepository.findById(connectorId)
                         .orElseThrow(() ->
-                                new IllegalArgumentException(
-                                        "Connector not found"));
+                               new ConnectorNotFoundException(
+        "Connector not found"));
 
         connectorRepository.delete(connector);
 
@@ -152,8 +155,8 @@ public class ConnectorServiceImpl
         Connector connector =
                 connectorRepository.findById(connectorId)
                         .orElseThrow(() ->
-                                new IllegalArgumentException(
-                                        "Connector not found"));
+                                new ConnectorNotFoundException(
+        "Connector not found"));
 
         ConnectorCredential credential =
                 credentialRepository.findById(credentialId)

@@ -26,6 +26,7 @@ import io.deccan.controlplane.workflow.enums.WorkflowStatus;
 import io.deccan.controlplane.workflow.event.model.WorkflowEvent;
 import io.deccan.controlplane.workflow.event.model.WorkflowEventType;
 import io.deccan.controlplane.workflow.event.publisher.WorkflowEventPublisher;
+import io.deccan.controlplane.workflow.exception.WorkflowNotFoundException;
 import io.deccan.controlplane.workflow.lifecycle.WorkflowLifecycleService;
 import io.deccan.controlplane.workflow.repository.WorkflowRepository;
 import io.deccan.controlplane.workflow.repository.WorkflowVersionRepository;
@@ -65,6 +66,7 @@ public class WorkflowServiceImpl implements WorkflowService {
 
             throw new IllegalArgumentException(
                     "Workflow already exists");
+        
 
         }
 
@@ -135,8 +137,8 @@ public class WorkflowServiceImpl implements WorkflowService {
         Workflow workflow =
                 workflowRepository.findById(workflowId)
                         .orElseThrow(() ->
-                                new IllegalArgumentException(
-                                        "Workflow not found"));
+                                new WorkflowNotFoundException(
+        "Workflow not found"));
         workflowLifecycleService.publish(workflow);
 
         Integer nextVersion =
@@ -213,8 +215,8 @@ public class WorkflowServiceImpl implements WorkflowService {
         Workflow workflow =
                 workflowRepository.findById(workflowId)
                         .orElseThrow(() ->
-                                new IllegalArgumentException(
-                                        "Workflow not found"));
+                                new WorkflowNotFoundException(
+        "Workflow not found"));
 
         return workflowVersionRepository
                 .findByWorkflowOrderByVersionDesc(workflow);
@@ -227,8 +229,8 @@ public class WorkflowServiceImpl implements WorkflowService {
         Workflow workflow =
                 workflowRepository.findById(workflowId)
                         .orElseThrow(() ->
-                                new IllegalArgumentException(
-                                        "Workflow not found"));
+                                new WorkflowNotFoundException(
+        "Workflow not found"));
 
         workflowLifecycleService.archive(workflow);
 
@@ -258,8 +260,8 @@ public class WorkflowServiceImpl implements WorkflowService {
         Workflow workflow =
                 workflowRepository.findById(workflowId)
                         .orElseThrow(() ->
-                                new IllegalArgumentException(
-                                        "Workflow not found"));
+                                new WorkflowNotFoundException(
+        "Workflow not found"));
 
         workflowLifecycleService.activate(workflow);
 
@@ -288,7 +290,8 @@ public class WorkflowServiceImpl implements WorkflowService {
 
         return workflowRepository.findById(workflowId)
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Workflow not found"));
+                        new WorkflowNotFoundException(
+        "Workflow not found"));
 
         }
 
@@ -301,7 +304,8 @@ public class WorkflowServiceImpl implements WorkflowService {
         Workflow workflow =
                 workflowRepository.findById(workflowId)
                         .orElseThrow(() ->
-                                new IllegalArgumentException("Workflow not found"));
+                                new WorkflowNotFoundException(
+        "Workflow not found"));
 
         workflow.setName(name);
         workflow.setDescription(description);
@@ -317,7 +321,8 @@ public class WorkflowServiceImpl implements WorkflowService {
         Workflow workflow =
                 workflowRepository.findById(workflowId)
                         .orElseThrow(() ->
-                                new IllegalArgumentException("Workflow not found"));
+                                new WorkflowNotFoundException(
+        "Workflow not found"));
 
         if (workflow.getStatus() == WorkflowStatus.ACTIVE) {
 
@@ -339,7 +344,8 @@ public class WorkflowServiceImpl implements WorkflowService {
         Workflow workflow =
                 workflowRepository.findById(workflowId)
                         .orElseThrow(() ->
-                                new IllegalArgumentException("Workflow not found"));
+                                new WorkflowNotFoundException(
+        "Workflow not found"));
 
         WorkflowVersion workflowVersion =
                 workflowVersionRepository
