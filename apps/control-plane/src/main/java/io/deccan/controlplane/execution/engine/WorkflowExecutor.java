@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.deccan.controlplane.execution.context.ExecutionContext;
 import io.deccan.controlplane.execution.context.model.NodeResult;
+import io.deccan.controlplane.execution.context.service.ExecutionContextService;
 import io.deccan.controlplane.execution.engine.node.NodeExecutor;
 import io.deccan.controlplane.execution.entity.WorkflowExecution;
 import io.deccan.controlplane.execution.event.ExecutionEventPublisher;
@@ -39,6 +40,7 @@ public class WorkflowExecutor {
     private final ExecutionStateMachine executionStateMachine;
     private final WorkflowExecutionRepository executionRepository;
     private final ExecutionEventPublisher executionEventPublisher;
+    private final ExecutionContextService executionContextService;
 
     public void execute(
         WorkflowExecution execution,
@@ -109,12 +111,25 @@ public class WorkflowExecutor {
                                 nodeExecution,
                                 context.getNodeOutput(
                         currentNode.getId()));
+                        NodeResult nodeResult =
+                                context.getNodeOutput(
+                                        currentNode.getId());
+
+                        if (nodeResult != null) {
+
+                        executionContextService.saveNodeOutput(
+                                execution,
+                                currentNode.getId(),
+                                objectMapper.valueToTree(
+                                        nodeResult));
+
+                        }
                         log.info(
                         "Completed node [{}]",
                         currentNode.getId());
-                        log.info(
-        "Workflow execution [{}] completed successfully",
-        execution.getId());
+        //                 log.info(
+        // "Workflow execution [{}] completed successfully",
+        // execution.getId());
 
                     }
                     catch (Exception ex) {
