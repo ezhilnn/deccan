@@ -16,6 +16,7 @@ import io.deccan.controlplane.execution.entity.WorkflowExecution;
 import io.deccan.controlplane.execution.enums.ExecutionStatus;
 import io.deccan.controlplane.execution.repository.WorkflowExecutionRepository;
 import io.deccan.controlplane.scheduler.service.WorkflowSchedulerService;
+import io.deccan.controlplane.task.dto.response.ExecutionTaskResponse;
 import io.deccan.controlplane.task.entity.ExecutionTask;
 import io.deccan.controlplane.task.enums.TaskStatus;
 import io.deccan.controlplane.task.factory.ExecutionTaskFactory;
@@ -28,7 +29,6 @@ import io.deccan.controlplane.worker.service.WorkerService;
 import io.deccan.controlplane.workflow.definition.WorkflowDefinition;
 import io.deccan.controlplane.workflow.entity.WorkflowVersion;
 import lombok.RequiredArgsConstructor;
-import io.deccan.controlplane.task.dto.response.ExecutionTaskResponse;
 
 @Service
 @RequiredArgsConstructor
@@ -275,7 +275,7 @@ public class ExecutionTaskServiceImpl
         public List<ExecutionTaskResponse> getTasks(
                 UUID executionId) {
 
-        return taskRepository.findByExecutionId(executionId)
+        return taskRepository.findByExecutionIdWithExecution(executionId)
                 .stream()
                 .map(mapper::toResponse)
                 .toList();
@@ -422,7 +422,7 @@ public void cancelTasks(
 public ExecutionTask getTask(
         UUID taskId){
 
-    return taskRepository.findById(taskId)
+    return taskRepository.findByIdWithExecution(taskId)
             .orElseThrow(() ->
                     new IllegalArgumentException(
                             "Task not found"));

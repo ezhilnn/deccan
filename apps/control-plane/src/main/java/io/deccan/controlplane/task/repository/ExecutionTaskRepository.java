@@ -1,19 +1,18 @@
 package io.deccan.controlplane.task.repository;
 
-import io.deccan.controlplane.task.entity.ExecutionTask;
-import io.deccan.controlplane.task.enums.TaskStatus;
-import io.deccan.controlplane.worker.entity.Worker;
-import io.deccan.controlplane.worker.enums.WorkerStatus;
-import jakarta.persistence.LockModeType;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import io.deccan.controlplane.task.entity.ExecutionTask;
+import io.deccan.controlplane.task.enums.TaskStatus;
+import jakarta.persistence.LockModeType;
 
 public interface ExecutionTaskRepository
         extends JpaRepository<ExecutionTask, UUID> {
@@ -53,6 +52,19 @@ public interface ExecutionTaskRepository
         TaskStatus status);
     List<ExecutionTask> findByExecutionId(
         UUID executionId);
+    @Query("""
+    SELECT t
+    FROM ExecutionTask t
+    JOIN FETCH t.execution
+    WHERE t.executionId = :executionId
+    ORDER BY t.createdAt
+    """)
+    List<ExecutionTask> findByExecutionIdWithExecution(
+
+            @Param("executionId")
+            UUID executionId
+
+    );
     List<ExecutionTask> findByStatusAndLeaseUntilBefore(
 
             TaskStatus status,
@@ -75,6 +87,14 @@ public interface ExecutionTaskRepository
     );
     Optional<ExecutionTask> findById(
         UUID id);
+    @Query("""
+    SELECT t
+    FROM ExecutionTask t
+    JOIN FETCH t.execution
+    WHERE t.id = :taskId
+    """)
+    Optional<ExecutionTask> findByIdWithExecution(
+            @Param("taskId") UUID taskId);
 
 
 
