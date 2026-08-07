@@ -1,17 +1,21 @@
 package io.deccan.controlplane.webhook.service;
 
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.fasterxml.jackson.databind.JsonNode;
+
+import io.deccan.controlplane.execution.dto.response.ExecutionResponse;
 import io.deccan.controlplane.execution.entity.WorkflowExecution;
+import io.deccan.controlplane.execution.mapper.ExecutionMapper;
 import io.deccan.controlplane.execution.service.ExecutionService;
 import io.deccan.controlplane.webhook.entity.WorkflowWebhook;
 import io.deccan.controlplane.webhook.repository.WorkflowWebhookRepository;
 import io.deccan.controlplane.workflow.entity.Workflow;
 import io.deccan.controlplane.workflow.repository.WorkflowRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +28,7 @@ public class WorkflowWebhookServiceImpl
     private final WorkflowWebhookRepository webhookRepository;
 
     private final ExecutionService executionService;
+    private final ExecutionMapper executionMapper;
 
     @Override
     public WorkflowWebhook registerWebhook(
@@ -50,9 +55,9 @@ public class WorkflowWebhookServiceImpl
     }
 
     @Override
-    public WorkflowExecution executeWebhook(
-            String token,
-            JsonNode payload) {
+        public ExecutionResponse executeWebhook(
+        String token,
+        JsonNode payload) {
 
         WorkflowWebhook webhook =
                 webhookRepository.findByToken(token)
@@ -68,9 +73,13 @@ public class WorkflowWebhookServiceImpl
 
         }
 
-        return executionService.executeWorkflow(
+        WorkflowExecution execution =
+        executionService.executeWorkflow(
                 webhook.getWorkflow().getId(),
                 payload);
+
+        return executionMapper.toResponse(
+                execution);
 
     }
 

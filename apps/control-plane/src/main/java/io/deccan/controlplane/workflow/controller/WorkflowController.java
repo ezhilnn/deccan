@@ -1,5 +1,22 @@
 package io.deccan.controlplane.workflow.controller;
 
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+
 import io.deccan.controlplane.common.response.ApiResponse;
 import io.deccan.controlplane.workflow.dto.request.CreateWorkflowRequest;
 import io.deccan.controlplane.workflow.dto.request.PublishWorkflowRequest;
@@ -15,15 +32,6 @@ import io.deccan.controlplane.workflow.mapper.WorkflowVersionMapper;
 import io.deccan.controlplane.workflow.service.WorkflowService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-import io.deccan.controlplane.workflow.dto.response.PageResponse;
-import io.deccan.controlplane.workflow.enums.WorkflowStatus;
-import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
-
-import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/workflows")
@@ -252,6 +260,7 @@ public class WorkflowController {
         }
         @PreAuthorize("hasAuthority('workflow.write')")
         @PostMapping("/import/{organizationId}")
+        @ResponseStatus(HttpStatus.CREATED)
         public ApiResponse<WorkflowResponse> importWorkflow(
 
                 @PathVariable UUID organizationId,
